@@ -818,7 +818,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     function excludeAccount(address account) external onlyOwner() {
         
-		require(
+	require(
            account != 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F,
             "TRIFORCE: We can not exclude Pancakeswap router."
         );
@@ -827,7 +827,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
         require(account != rewardWallet, 'TRIFORCE: We can not exclude reward wallet.');
         require(!_isExcluded[account], "TRIFORCE: Account is already excluded");
         
-		if (_reflectionBalance[account] > 0) {
+	if (_reflectionBalance[account] > 0) {
             _tokenBalance[account] = tokenFromReflection(
                 _reflectionBalance[account]
             );
@@ -911,7 +911,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
             _tokenBalance[sender] = _tokenBalance[sender].sub(amount);
         }
         
-		if (_isExcluded[recipient]) {
+	if (_isExcluded[recipient]) {
             _tokenBalance[recipient] = _tokenBalance[recipient].add(transferAmount);
         }
 
@@ -922,7 +922,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
         uint256 transferAmount = amount;
         
         //tax fee
-        if(_taxFee != 0){
+        if(_taxFee != 0) {
             uint256 taxFee = amount.mul(_taxFee).div(10**(_feeDecimal + 2));
             transferAmount = transferAmount.sub(taxFee);
             _reflectionTotal = _reflectionTotal.sub(taxFee.mul(rate));
@@ -930,7 +930,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
         }
 
         //take liquidity fee
-        if(_liquidityFee != 0){
+        if(_liquidityFee != 0) {
             uint256 liquidityFee = amount.mul(_liquidityFee).div(10**(_feeDecimal + 2));
             transferAmount = transferAmount.sub(liquidityFee);
             _reflectionBalance[address(this)] = _reflectionBalance[address(this)].add(liquidityFee.mul(rate));
@@ -939,7 +939,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
         }
 
         //take lp Reward fee
-        if(_lpRewardFee != 0){
+        if(_lpRewardFee != 0)  {
             uint256 lpRewardFee = amount.mul(_lpRewardFee).div(10**(_feeDecimal + 2));
             transferAmount = transferAmount.sub(lpRewardFee);
             _reflectionBalance[rewardWallet] = _reflectionBalance[rewardWallet].add(lpRewardFee.mul(rate));
@@ -948,7 +948,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
         }
 
         //take burn fee
-        if(_burnFee != 0){
+        if(_burnFee != 0) {
             uint256 burnFee = amount.mul(_burnFee).div(10**(_feeDecimal + 2));
             transferAmount = transferAmount.sub(burnFee);
             _tokenTotal = _tokenTotal.sub(burnFee);
@@ -980,7 +980,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     
      function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
        
-	   // split the contract balance except swapCallerFee into halves
+	// split the contract balance except swapCallerFee into halves
         uint256 lockedForSwap = contractTokenBalance.sub(_swapCallerFee);
         
         // split the contract balance into halves
@@ -988,12 +988,12 @@ contract TRIFORCE is Context, IBEP20, Ownable {
         uint256 otherHalf = lockedForSwap.sub(half);
 
         /* capture the contract's current ETH balance.
-		 *	this is so that we can capture exactly the amount of ETH that the
-		 *	swap creates, and not make the liquidity event include any ETH that
-		 *	has been manually sent to the contract 
-		 */
+	 * this is so that we can capture exactly the amount of ETH that the
+	 * swap creates, and not make the liquidity event include any ETH that
+	 * has been manually sent to the contract 
+	 */
         
-		uint256 initialBalance = address(this).balance;
+	uint256 initialBalance = address(this).balance;
 
         // swap tokens for ETH
         swapTokensForEth(half); 
@@ -1012,7 +1012,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     function swapTokensForEth(uint256 tokenAmount) private {
         
-		// generate the pancakeswap pair path of token -> weth
+	// generate the pancakeswap pair path of token -> weth
         address[] memory path = new address[](2);
         path[0] = address(this);
         path[1] = pancakeRouter.WETH();
@@ -1045,7 +1045,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         
-		// approve token transfer to cover all possible scenarios
+	// approve token transfer to cover all possible scenarios
         _approve(address(this), address(pancakeRouter), tokenAmount);
         
 
@@ -1076,9 +1076,9 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     function rewardLiquidityProviders() private {
        
-		uint256 tokenBalance = balanceOf(rewardWallet);
+	uint256 tokenBalance = balanceOf(rewardWallet);
         
-		if(tokenBalance > minTokenBeforeReward) {
+	if(tokenBalance > minTokenBeforeReward) {
             uint256 rewardAmount = reflectionFromToken(tokenBalance, false);
             _reflectionBalance[pancakeswapPair] = _reflectionBalance[pancakeswapPair].add(rewardAmount);
             _reflectionBalance[rewardWallet] = _reflectionBalance[rewardWallet].sub(rewardAmount);
@@ -1098,14 +1098,14 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     
     function _rebalance(uint256 lpBalance) private lockTheSwap {
        
-		lastRebalance = now;
+	lastRebalance = now;
         
         uint256 amountToRemove = lpBalance.mul(_liquidityRemoveFee).div(10**(_feeDecimal + 2));
         
         // how much tokens we have before swap now, so we don't burn the liqudity tokens as well
         removeLiquidityETH(amountToRemove);
        
-	    // pancakeswap don't allow for a token to by itself, so we have to use an external account, which in this case is called the balancer
+	// pancakeswap doesn't allow for a token to by itself, so we have to use an external account, which in this case is called the balancer
         swapEthForTokens(address(this).balance);
 
         // how much tokens we swaped into

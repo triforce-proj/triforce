@@ -611,570 +611,570 @@ contract Balancer {
     }	
 }	
 		
-	contract TRIFORCE is Context, IBEP20, Ownable {	
-	    using SafeMath for uint256;	
-	    using Address for address;	
-		
-	    string private _name = "TRIFORCE";	
-	    string private _symbol = "TFC";	
-	    uint8 private _decimals = 18;	
-		
-	    mapping(address => uint256) internal _reflectionBalance;	
-	    mapping(address => uint256) internal _tokenBalance;	
-	    mapping(address => mapping(address => uint256)) internal _allowances;	
-		
-	    uint256 private constant MAX = ~uint256(0);	
-	    uint256 internal _tokenTotal = 10_000_000e18; // 10 million total supply	
-	    uint256 internal _reflectionTotal = (MAX - (MAX % _tokenTotal));	
-		
-	    mapping(address => bool) isExcludedFromFee;	
-	    mapping(address => bool) internal _isExcluded;	
-	    address[] internal _excluded;	
-	    	
-	    //the fee contains two decimal places so 300 = 3%	
-	    uint256 public _feeDecimal = 2;	
-	    uint256 public _taxFee = 300; //3% of every transaction's TFC tokens will be collected as tax fee, and redistributed to reward holders	
-	    uint256 public _burnFee = 300; // 3% of every transaction's TFC tokens will be burned 	
-	    uint256 public _liquidityFee = 300; // 3% of every transaction's TFC tokens will be collected as liquidity fee, to automatically generate liquidity	
-	    uint256 public _lpRewardFee = 0;	
-	    	
-	    uint256 public _liquidityRemoveFee = 300;  //3% of liquidity will be used for rebalancing mechanism	
-	    uint256 public _rebalanceCallerFee = 500; // 5% of TFC tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism 	
-	    uint256 public _swapCallerFee = 200e18;   // 200 TFC tokens will be given to the caller of the transaction initiating automatic liquidity generation	
-		
-	    uint256 public _maxTxAmount = 75000e18;  // maximum allowed 75000 TFC tokens per transaction	
-			
-		uint256 public _taxFeeTotal;	
-	    uint256 public _burnFeeTotal;	
-	    uint256 public _liquidityFeeTotal;	
-	    uint256 public _lpRewardFeeTotal;	
-		
-		
-	    bool public tradingEnabled = false;	
-	    bool private inSwapAndLiquify;	
-	    bool public swapAndLiquifyEnabled = false;	
-	    bool public rebalanceEnabled = true;	
-	    	
-	    uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance must have a minimum of 10000 TFC Tokens for automatic liquidity generation	
-	    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 TFC tokens for rewarding LP	
-		
-	    uint256 public lastRebalance = now ;	
-	    uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour	
-	    	
-	    IPancakeRouter02 public pancakeRouter;	
-	    address public pancakeswapPair;	
-	    address public rewardWallet;	
-	    address public balancer;	
-	    	
-	    event TradingEnabled(bool enabled);	
-	    event SwapAndLiquifyEnabledUpdated(bool enabled);	
-	    event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);	
-	    event Rebalance(uint256 amount);	
-		event MaxTxAmountUpdated(uint256 maxTxAmount);	
-		
-	    modifier lockTheSwap {	
-	        inSwapAndLiquify = true;	
-	        _;	
-	        inSwapAndLiquify = false;	
+contract TRIFORCE is Context, IBEP20, Ownable {	
+    using SafeMath for uint256;	
+    using Address for address;	
+
+    string private _name = "TRIFORCE";	
+    string private _symbol = "TFC";	
+    uint8 private _decimals = 18;	
+
+    mapping(address => uint256) internal _reflectionBalance;	
+    mapping(address => uint256) internal _tokenBalance;	
+    mapping(address => mapping(address => uint256)) internal _allowances;	
+
+    uint256 private constant MAX = ~uint256(0);	
+    uint256 internal _tokenTotal = 10_000_000e18; // 10 million total supply	
+    uint256 internal _reflectionTotal = (MAX - (MAX % _tokenTotal));	
+
+    mapping(address => bool) isExcludedFromFee;	
+    mapping(address => bool) internal _isExcluded;	
+    address[] internal _excluded;	
+
+    //the fee contains two decimal places so 300 = 3%	
+    uint256 public _feeDecimal = 2;	
+    uint256 public _taxFee = 300; //3% of every transaction's TFC tokens will be collected as tax fee, and redistributed to reward holders	
+    uint256 public _burnFee = 300; // 3% of every transaction's TFC tokens will be burned 	
+    uint256 public _liquidityFee = 300; // 3% of every transaction's TFC tokens will be collected as liquidity fee, to automatically generate liquidity	
+    uint256 public _lpRewardFee = 0;	
+
+    uint256 public _liquidityRemoveFee = 300;  //3% of liquidity will be used for rebalancing mechanism	
+    uint256 public _rebalanceCallerFee = 500; // 5% of TFC tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism 	
+    uint256 public _swapCallerFee = 200e18;   // 200 TFC tokens will be given to the caller of the transaction initiating automatic liquidity generation	
+
+    uint256 public _maxTxAmount = 150000e18;  // maximum allowed 150000 TFC tokens per transaction	
+
+    uint256 public _taxFeeTotal;	
+    uint256 public _burnFeeTotal;	
+    uint256 public _liquidityFeeTotal;	
+    uint256 public _lpRewardFeeTotal;	
+
+
+    bool public tradingEnabled = false;	
+    bool private inSwapAndLiquify;	
+    bool public swapAndLiquifyEnabled = false;	
+    bool public rebalanceEnabled = true;	
+
+    uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance must have a minimum of 10000 TFC Tokens for automatic liquidity generation	
+    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 TFC tokens for rewarding LP	
+
+    uint256 public lastRebalance = now ;	
+    uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour	
+
+    IPancakeRouter02 public pancakeRouter;	
+    address public pancakeswapPair;	
+    address public rewardWallet;	
+    address public balancer;	
+
+    event TradingEnabled(bool enabled);	
+    event SwapAndLiquifyEnabledUpdated(bool enabled);	
+    event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);	
+    event Rebalance(uint256 amount);	
+	event MaxTxAmountUpdated(uint256 maxTxAmount);	
+
+    modifier lockTheSwap {	
+	inSwapAndLiquify = true;	
+	_;	
+	inSwapAndLiquify = false;	
+    }	
+
+
+    constructor() public {	
+
+       IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);	
+	 // Create a pancakeswap pair for this new token	
+
+	pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())	
+	    .createPair(address(this), _pancakeRouter.WETH());	
+
+	pancakeRouter = _pancakeRouter;	
+
+	rewardWallet = address(new RewardWallet());	
+	balancer = address(new Balancer());	
+
+	isExcludedFromFee[_msgSender()] = true;	
+	isExcludedFromFee[address(this)] = true;	
+
+	_reflectionBalance[_msgSender()] = _reflectionTotal;	
+	emit Transfer(address(0), _msgSender(), _tokenTotal);	
+    }	
+
+    function name() public view returns (string memory) {	
+	return _name;	
+    }	
+
+    function symbol() public view returns (string memory) {	
+	return _symbol;	
+    }	
+
+    function decimals() public view returns (uint8) {	
+	return _decimals;	
+    }	
+
+    function totalSupply() public override view returns (uint256) {	
+	return _tokenTotal;	
+    }	
+
+    function balanceOf(address account) public override view returns (uint256) {	
+	if (_isExcluded[account]) return _tokenBalance[account];	
+	return tokenFromReflection(_reflectionBalance[account]);	
+    }	
+
+    function transfer(address recipient, uint256 amount)	
+	public	
+	override	
+	virtual	
+	returns (bool)	
+    {	
+       _transfer(_msgSender(),recipient,amount);	
+	return true;	
+    }	
+
+    function allowance(address owner, address spender)	
+	public	
+	override	
+	view	
+	returns (uint256)	
+    {	
+	return _allowances[owner][spender];	
+    }	
+
+    function approve(address spender, uint256 amount)	
+	public	
+	override	
+	returns (bool)	
+    {	
+	_approve(_msgSender(), spender, amount);	
+	return true;	
+    }	
+
+    function transferFrom(	
+	address sender,	
+	address recipient,	
+	uint256 amount	
+    ) public override virtual returns (bool) {	
+	_transfer(sender,recipient,amount);	
+
+	_approve(sender,_msgSender(),_allowances[sender][_msgSender()].sub( amount,"BEP20: transfer amount exceeds allowance"));	
+	return true;	
+    }	
+
+    function increaseAllowance(address spender, uint256 addedValue)	
+	public	
+	virtual	
+	returns (bool)	
+    {	
+	_approve(	
+	    _msgSender(),	
+	    spender,	
+	    _allowances[_msgSender()][spender].add(addedValue)	
+	);	
+	return true;	
+    }	
+
+    function decreaseAllowance(address spender, uint256 subtractedValue)	
+	public	
+	virtual	
+	returns (bool)	
+    {	
+	_approve(	
+	    _msgSender(),	
+	    spender,	
+	    _allowances[_msgSender()][spender].sub(	
+		subtractedValue,	
+		"BEP20: decreased allowance below zero"	
+	    )	
+	);	
+	return true;	
+    }	
+
+    function isExcluded(address account) public view returns (bool) {	
+	return _isExcluded[account];	
+    }	
+
+    function reflectionFromToken(uint256 tokenAmount, bool deductTransferFee)	
+	public	
+	view	
+	returns (uint256)	
+    {	
+	require(tokenAmount <= _tokenTotal, "Amount must be less than supply");	
+	if (!deductTransferFee) {	
+	    return tokenAmount.mul(_getReflectionRate());	
+	} else {	
+	    return	
+		tokenAmount.sub(tokenAmount.mul(_taxFee).div(10** _feeDecimal + 2)).mul(	
+		    _getReflectionRate()	
+		);	
+	}	
+    }	
+
+    function tokenFromReflection(uint256 reflectionAmount)	
+	public	
+	view	
+	returns (uint256)	
+    {	
+	require(	
+	    reflectionAmount <= _reflectionTotal,	
+	    "Amount must be less than total reflections"	
+	);	
+	uint256 currentRate = _getReflectionRate();	
+	return reflectionAmount.div(currentRate);	
+    }	
+
+    function excludeAccount(address account) external onlyOwner() {	
+
+	require(	
+	   account != 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F,	
+	    "TRIFORCE: We can not exclude Pancakeswap router."	
+	);	
+
+	require(account != address(this), 'TRIFORCE: We can not exclude contract self.');	
+	require(account != rewardWallet, 'TRIFORCE: We can not exclude reward wallet.');	
+	require(!_isExcluded[account], "TRIFORCE: Account is already excluded");	
+
+	if (_reflectionBalance[account] > 0) {	
+	    _tokenBalance[account] = tokenFromReflection(	
+		_reflectionBalance[account]	
+	    );	
+	}	
+	_isExcluded[account] = true;	
+	_excluded.push(account);	
+    }	
+
+    function includeAccount(address account) external onlyOwner() {	
+	require(_isExcluded[account], "TRIFORCE: Account is already included");	
+	for (uint256 i = 0; i < _excluded.length; i++) {	
+	    if (_excluded[i] == account) {	
+		_excluded[i] = _excluded[_excluded.length - 1];	
+		_tokenBalance[account] = 0;	
+		_isExcluded[account] = false;	
+		_excluded.pop();	
+		break;	
 	    }	
-		
-		
-	    constructor() public {	
-	       	
-	       IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);	
-	         // Create a pancakeswap pair for this new token	
-	            	
-	        pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())	
-	            .createPair(address(this), _pancakeRouter.WETH());	
-	            	
-	        pancakeRouter = _pancakeRouter;	
-	        	
-	        rewardWallet = address(new RewardWallet());	
-	        balancer = address(new Balancer());	
-	        	
-	        isExcludedFromFee[_msgSender()] = true;	
-	        isExcludedFromFee[address(this)] = true;	
-	        	
-	        _reflectionBalance[_msgSender()] = _reflectionTotal;	
-	        emit Transfer(address(0), _msgSender(), _tokenTotal);	
-	    }	
-		
-	    function name() public view returns (string memory) {	
-	        return _name;	
-	    }	
-		
-	    function symbol() public view returns (string memory) {	
-	        return _symbol;	
-	    }	
-		
-	    function decimals() public view returns (uint8) {	
-	        return _decimals;	
-	    }	
-		
-	    function totalSupply() public override view returns (uint256) {	
-	        return _tokenTotal;	
-	    }	
-		
-	    function balanceOf(address account) public override view returns (uint256) {	
-	        if (_isExcluded[account]) return _tokenBalance[account];	
-	        return tokenFromReflection(_reflectionBalance[account]);	
-	    }	
-		
-	    function transfer(address recipient, uint256 amount)	
-	        public	
-	        override	
-	        virtual	
-	        returns (bool)	
-	    {	
-	       _transfer(_msgSender(),recipient,amount);	
-	        return true;	
-	    }	
-		
-	    function allowance(address owner, address spender)	
-	        public	
-	        override	
-	        view	
-	        returns (uint256)	
-	    {	
-	        return _allowances[owner][spender];	
-	    }	
-		
-	    function approve(address spender, uint256 amount)	
-	        public	
-	        override	
-	        returns (bool)	
-	    {	
-	        _approve(_msgSender(), spender, amount);	
-	        return true;	
-	    }	
-		
-	    function transferFrom(	
-	        address sender,	
-	        address recipient,	
-	        uint256 amount	
-	    ) public override virtual returns (bool) {	
-	        _transfer(sender,recipient,amount);	
-	               	
-	        _approve(sender,_msgSender(),_allowances[sender][_msgSender()].sub( amount,"BEP20: transfer amount exceeds allowance"));	
-	        return true;	
-	    }	
-		
-	    function increaseAllowance(address spender, uint256 addedValue)	
-	        public	
-	        virtual	
-	        returns (bool)	
-	    {	
-	        _approve(	
-	            _msgSender(),	
-	            spender,	
-	            _allowances[_msgSender()][spender].add(addedValue)	
-	        );	
-	        return true;	
-	    }	
-		
-	    function decreaseAllowance(address spender, uint256 subtractedValue)	
-	        public	
-	        virtual	
-	        returns (bool)	
-	    {	
-	        _approve(	
-	            _msgSender(),	
-	            spender,	
-	            _allowances[_msgSender()][spender].sub(	
-	                subtractedValue,	
-	                "BEP20: decreased allowance below zero"	
-	            )	
-	        );	
-	        return true;	
-	    }	
-		
-	    function isExcluded(address account) public view returns (bool) {	
-	        return _isExcluded[account];	
-	    }	
-		
-	    function reflectionFromToken(uint256 tokenAmount, bool deductTransferFee)	
-	        public	
-	        view	
-	        returns (uint256)	
-	    {	
-	        require(tokenAmount <= _tokenTotal, "Amount must be less than supply");	
-	        if (!deductTransferFee) {	
-	            return tokenAmount.mul(_getReflectionRate());	
-	        } else {	
-	            return	
-	                tokenAmount.sub(tokenAmount.mul(_taxFee).div(10** _feeDecimal + 2)).mul(	
-	                    _getReflectionRate()	
-	                );	
-	        }	
-	    }	
-		
-	    function tokenFromReflection(uint256 reflectionAmount)	
-	        public	
-	        view	
-	        returns (uint256)	
-	    {	
-	        require(	
-	            reflectionAmount <= _reflectionTotal,	
-	            "Amount must be less than total reflections"	
-	        );	
-	        uint256 currentRate = _getReflectionRate();	
-	        return reflectionAmount.div(currentRate);	
-	    }	
-		
-	    function excludeAccount(address account) external onlyOwner() {	
-	        	
-		require(	
-	           account != 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F,	
-	            "TRIFORCE: We can not exclude Pancakeswap router."	
-	        );	
-				
-	        require(account != address(this), 'TRIFORCE: We can not exclude contract self.');	
-	        require(account != rewardWallet, 'TRIFORCE: We can not exclude reward wallet.');	
-	        require(!_isExcluded[account], "TRIFORCE: Account is already excluded");	
-	        	
-		if (_reflectionBalance[account] > 0) {	
-	            _tokenBalance[account] = tokenFromReflection(	
-	                _reflectionBalance[account]	
-	            );	
-	        }	
-	        _isExcluded[account] = true;	
-	        _excluded.push(account);	
-	    }	
-		
-	    function includeAccount(address account) external onlyOwner() {	
-	        require(_isExcluded[account], "TRIFORCE: Account is already included");	
-	        for (uint256 i = 0; i < _excluded.length; i++) {	
-	            if (_excluded[i] == account) {	
-	                _excluded[i] = _excluded[_excluded.length - 1];	
-	                _tokenBalance[account] = 0;	
-	                _isExcluded[account] = false;	
-	                _excluded.pop();	
-	                break;	
-	            }	
-	        }	
-	    }	
-		
-	    function _approve(	
-	        address owner,	
-	        address spender,	
-	        uint256 amount	
-	    ) private {	
-	        require(owner != address(0), "BEP20: approve from the zero address");	
-	        require(spender != address(0), "BEP20: approve to the zero address");	
-		
-	        _allowances[owner][spender] = amount;	
-	        emit Approval(owner, spender, amount);	
-	    }	
-		
-	    function _transfer(	
-	        address sender,	
-	        address recipient,	
-	        uint256 amount	
-	    ) private {	
-	        require(sender != address(0), "BEP20: transfer from the zero address");	
-	        require(recipient != address(0), "BEP20: transfer to the zero address");	
-	        require(amount > 0, "Transfer amount must be greater than zero");	
-	        require(tradingEnabled || sender == owner() || recipient == owner() ||	
-	                isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
-						
-			if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
-	            require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
-			}	
-	        	
-	        //swapAndLiquify or rebalance(don't do both at once or it will cost too much gas)	
-	       	
-		   if(!inSwapAndLiquify) {	
-	            bool swap = true;	
-	            if(now > lastRebalance + rebalanceInterval && rebalanceEnabled){	
-	                uint256 lpBalance = IBEP20(pancakeswapPair).balanceOf(address(this));	
-	                if(lpBalance > 100) {	
-	                    _rebalance(lpBalance);	
-	                    swap = false;	
-	                }	
-	            } 	
-	           if(swap) {	
-	                uint256 contractTokenBalance = balanceOf(address(this));	
-	                bool overMinTokenBalance = contractTokenBalance >= minTokensBeforeSwap;	
-	                if (overMinTokenBalance && sender != pancakeswapPair && swapAndLiquifyEnabled) {	
-	                    swapAndLiquify(contractTokenBalance);	
-	                    rewardLiquidityProviders();	
-	                }	
-	           }	
-	        }	
-	        	
-	        	
-	        uint256 transferAmount = amount;	
-	        uint256 rate = _getReflectionRate();	
-		
-		
-	        if(!isExcludedFromFee[_msgSender()] && !isExcludedFromFee[recipient] && !inSwapAndLiquify){	
-	            transferAmount = collectFee(sender,amount,rate);	
-	        }	
-				
-	        //transfer reflection	
-	        _reflectionBalance[sender] = _reflectionBalance[sender].sub(amount.mul(rate));	
-	        _reflectionBalance[recipient] = _reflectionBalance[recipient].add(transferAmount.mul(rate));	
-		
-	        //if any account belongs to the excludedAccount transfer token	
-	        if (_isExcluded[sender]) {	
-	            _tokenBalance[sender] = _tokenBalance[sender].sub(amount);	
-	        }	
-	        	
-		if (_isExcluded[recipient]) {	
-	            _tokenBalance[recipient] = _tokenBalance[recipient].add(transferAmount);	
-	        }	
-		
-	        emit Transfer(sender, recipient, transferAmount);	
-	    }	
-	    	
-	    function collectFee(address account, uint256 amount, uint256 rate) private returns (uint256) {	
-	        uint256 transferAmount = amount;	
-	        	
-	        //tax fee	
-	        if(_taxFee != 0) {	
-	            uint256 taxFee = amount.mul(_taxFee).div(10**(_feeDecimal + 2));	
-	            transferAmount = transferAmount.sub(taxFee);	
-	            _reflectionTotal = _reflectionTotal.sub(taxFee.mul(rate));	
-	            _taxFeeTotal = _taxFeeTotal.add(taxFee);	
-	        }	
-		
-	        //take liquidity fee	
-	        if(_liquidityFee != 0) {	
-	            uint256 liquidityFee = amount.mul(_liquidityFee).div(10**(_feeDecimal + 2));	
-	            transferAmount = transferAmount.sub(liquidityFee);	
-	            _reflectionBalance[address(this)] = _reflectionBalance[address(this)].add(liquidityFee.mul(rate));	
-	            _liquidityFeeTotal = _liquidityFeeTotal.add(liquidityFee);	
-	            emit Transfer(account,address(this),liquidityFee);	
-	        }	
-		
-	        //take lp Reward fee	
-	        if(_lpRewardFee != 0)  {	
-	            uint256 lpRewardFee = amount.mul(_lpRewardFee).div(10**(_feeDecimal + 2));	
-	            transferAmount = transferAmount.sub(lpRewardFee);	
-	            _reflectionBalance[rewardWallet] = _reflectionBalance[rewardWallet].add(lpRewardFee.mul(rate));	
-	            _lpRewardFeeTotal = _lpRewardFeeTotal.add(lpRewardFee);	
-	            emit Transfer(account,rewardWallet,lpRewardFee);	
-	        }	
-		
-	        //take burn fee	
-	        if(_burnFee != 0) {	
-	            uint256 burnFee = amount.mul(_burnFee).div(10**(_feeDecimal + 2));	
-	            transferAmount = transferAmount.sub(burnFee);	
-	            _tokenTotal = _tokenTotal.sub(burnFee);	
-	            _reflectionTotal = _reflectionTotal.sub(burnFee.mul(rate));	
-	            _burnFeeTotal = _burnFeeTotal.add(burnFee);	
-	            emit Transfer(account,address(0),burnFee);	
-	        }	
-	        	
-	        return transferAmount;	
-	    }	
-		
-	    function _getReflectionRate() private view returns (uint256) {	
-	        uint256 reflectionSupply = _reflectionTotal;	
-	        uint256 tokenSupply = _tokenTotal;	
-	        for (uint256 i = 0; i < _excluded.length; i++) {	
-	            if (	
-	                _reflectionBalance[_excluded[i]] > reflectionSupply ||	
-	                _tokenBalance[_excluded[i]] > tokenSupply	
-	            ) return _reflectionTotal.div(_tokenTotal);	
-	            reflectionSupply = reflectionSupply.sub(	
-	                _reflectionBalance[_excluded[i]]	
-	            );	
-	            tokenSupply = tokenSupply.sub(_tokenBalance[_excluded[i]]);	
-	        }	
-	        if (reflectionSupply < _reflectionTotal.div(_tokenTotal))	
-	            return _reflectionTotal.div(_tokenTotal);	
-	        return reflectionSupply.div(tokenSupply);	
-	    }	
-	    	
-	     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {	
-	       	
-		// split the contract balance except swapCallerFee into halves	
-	        uint256 lockedForSwap = contractTokenBalance.sub(_swapCallerFee);	
-	        	
-	        // split the contract balance into halves	
-	        uint256 half = lockedForSwap.div(2);	
-	        uint256 otherHalf = lockedForSwap.sub(half);	
-		
-	        /* capture the contract's current ETH balance.	
-		 * this is so that we can capture exactly the amount of ETH that the	
-		 * swap creates, and not make the liquidity event include any ETH that	
-		 * has been manually sent to the contract 	
-		 */	
-	        	
-		uint256 initialBalance = address(this).balance;	
-		
-	        // swap tokens for ETH	
-	        swapTokensForEth(half); 	
-		
-	        // how much ETH did we just swap into?	
-	        uint256 newBalance = address(this).balance.sub(initialBalance);	
-		
-	        // add liquidity to pancakeswap	
-	        addLiquidity(otherHalf, newBalance);	
-	        	
-	        emit SwapAndLiquify(half, newBalance, otherHalf);	
-	        	
-	        //give the swap caller fee	
-	        _transfer(address(this), tx.origin, _swapCallerFee);	
-	    }	
-		
-	    function swapTokensForEth(uint256 tokenAmount) private {	
-	        	
-		// generate the pancakeswap pair path of token -> weth	
-	        address[] memory path = new address[](2);	
-	        path[0] = address(this);	
-	        path[1] = pancakeRouter.WETH();	
-	        	
-		
-	        _approve(address(this), address(pancakeRouter), tokenAmount);	
-		
-	        // make the swap	
-	        pancakeRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(	
-	            tokenAmount,	
-	            0, // accept any amount of ETH	
-	            path,	
-	            address(this),	
-	            block.timestamp	
-	        );	
-	    }	
-	    	
-	    function swapEthForTokens(uint256 EthAmount) private {	
-	        address[] memory path = new address[](2);	
-	        path[0] = pancakeRouter.WETH();	
-	        path[1] = address(this);	
-		
-	        pancakeRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: EthAmount}(	
-	                0,	
-	                path,	
-	                address(balancer),	
-	                block.timestamp	
-	            );	
-	    }	
-	    	
-	    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {	
-	        	
-		// approve token transfer to cover all possible scenarios	
-	        _approve(address(this), address(pancakeRouter), tokenAmount);	
-	        	
-		
-	        // add the liquidity	
-	        pancakeRouter.addLiquidityETH{value: ethAmount}(	
-	            address(this),	
-	            tokenAmount,	
-	            0, // slippage is unavoidable	
-	            0, // slippage is unavoidable	
-	            address(this),	
-	            block.timestamp	
-	        );	
-	    }	
-		
-	    function removeLiquidityETH(uint256 lpAmount) private returns(uint ETHAmount) {	
-		
-	        IBEP20(pancakeswapPair).approve(address(pancakeRouter), lpAmount);	
-		
-	        (ETHAmount) = pancakeRouter.removeLiquidityETHSupportingFeeOnTransferTokens(	
-	                address(this),	
-	                lpAmount,	
-	                0,	
-	                0,	
-	                address(this),	
-	                block.timestamp	
-	            );	
-	    }	
-		
-	    function rewardLiquidityProviders() private {	
-	       	
-		uint256 tokenBalance = balanceOf(rewardWallet);	
-	        	
-		if(tokenBalance > minTokenBeforeReward) {	
-	            uint256 rewardAmount = reflectionFromToken(tokenBalance, false);	
-	            _reflectionBalance[pancakeswapPair] = _reflectionBalance[pancakeswapPair].add(rewardAmount);	
-	            _reflectionBalance[rewardWallet] = _reflectionBalance[rewardWallet].sub(rewardAmount);	
-	            emit Transfer(rewardWallet, pancakeswapPair, tokenBalance);	
-	            IPancakePair(pancakeswapPair).sync();	
-	        }	
-	    }	
-	    	
-	    function rebalance() public {	
-	        require(now > lastRebalance + rebalanceInterval && balanceOf(_msgSender()) >= 1000e18, 'TRIFORCE: Not allowed Rebalance.');	
-	        	
-	        uint256 lpBalance = IBEP20(pancakeswapPair).balanceOf(address(this));	
-	        require(lpBalance > 100, "LP balance of contract should be greater than 100");	
-	        	
-	        _rebalance(lpBalance);	
-	    }	
-	    	
-	    function _rebalance(uint256 lpBalance) private lockTheSwap {	
-	       	
-		lastRebalance = now;	
-	        	
-	        uint256 amountToRemove = lpBalance.mul(_liquidityRemoveFee).div(10**(_feeDecimal + 2));	
-	        	
-	        // how much tokens we have before swap now, so we don't burn the liqudity tokens as well	
-	        removeLiquidityETH(amountToRemove);	
-	       	
-		// pancakeswap doesn't allow for a token to by itself, so we have to use an external account, which in this case is called the balancer	
-	        swapEthForTokens(address(this).balance);	
-		
-	        // how much tokens we swaped into	
-	        uint256 swapedTokens = balanceOf(address(balancer));	
-	        uint256 rewardForCaller = swapedTokens.mul(_rebalanceCallerFee).div(10**(_feeDecimal + 2));	
-	        uint256 amountToBurn = swapedTokens.sub(rewardForCaller);	
-	        	
-	        uint256 rate =  _getReflectionRate();	
-		
-	        _reflectionBalance[_msgSender()] = _reflectionBalance[_msgSender()].add(rewardForCaller.mul(rate));	
-	        _reflectionBalance[address(balancer)] = 0;	
-	        	
-	        _burnFeeTotal = _burnFeeTotal.add(amountToBurn);	
-	        _tokenTotal = _tokenTotal.sub(amountToBurn);	
-	        _reflectionTotal = _reflectionTotal.sub(amountToBurn.mul(rate));	
-		
-	        emit Transfer(address(balancer), _msgSender(), rewardForCaller);	
-	        emit Transfer(address(balancer), address(0), amountToBurn);	
-	        emit Rebalance(amountToBurn);	
-	    }	
-	    	
-	    function setEnableTrading(bool enabled) external onlyOwner() {	
-	        tradingEnabled = enabled;	
-	        TradingEnabled(enabled);	
-	    }	
-	    	
-	    function setExcludedFromFee(address account, bool excluded) public onlyOwner {	
-	        isExcludedFromFee[account] = excluded;	
-	    }	
-	    	
-	    function setSwapAndLiquifyEnabled(bool enabled) public onlyOwner {	
-	        swapAndLiquifyEnabled = enabled;	
-	        SwapAndLiquifyEnabledUpdated(enabled);	
-	    }	
-			
-		function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
-	        require(maxTxAmount >= 50000e18 , 'TRIFORCE: maxTxAmount should be greater than 50000');	
-	        _maxTxAmount = maxTxAmount;	
-	        emit MaxTxAmountUpdated(maxTxAmount);	
-	    }	
-	    	
-	    function setTaxFee(uint256 fee) public onlyOwner {	
-	        _taxFee = fee;	
-	    }	
-	    	
-	    function setBurnFee(uint256 fee) public onlyOwner {	
-	        _burnFee = fee;	
-	    }	
-	    	
-	    function setLiquidityFee(uint256 fee) public onlyOwner {	
-	        _liquidityFee = fee;	
-	    }	
-	    	
-	    function setLpRewardFee(uint256 fee) public onlyOwner {	
-	        _lpRewardFee = fee;	
-	    }	
-	    	
-	    function setLiquidityRemoveFee(uint256 fee) public onlyOwner {	
-	        _liquidityRemoveFee = fee;	
-	    }	
+	}	
+    }	
+
+    function _approve(	
+	address owner,	
+	address spender,	
+	uint256 amount	
+    ) private {	
+	require(owner != address(0), "BEP20: approve from the zero address");	
+	require(spender != address(0), "BEP20: approve to the zero address");	
+
+	_allowances[owner][spender] = amount;	
+	emit Approval(owner, spender, amount);	
+    }	
+
+    function _transfer(	
+	address sender,	
+	address recipient,	
+	uint256 amount	
+    ) private {	
+	require(sender != address(0), "BEP20: transfer from the zero address");	
+	require(recipient != address(0), "BEP20: transfer to the zero address");	
+	require(amount > 0, "Transfer amount must be greater than zero");	
+	require(tradingEnabled || sender == owner() || recipient == owner() ||	
+		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
+
+		if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
+	    require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
+		}	
+
+	//swapAndLiquify or rebalance(don't do both at once or it will cost too much gas)	
+
+	   if(!inSwapAndLiquify) {	
+	    bool swap = true;	
+	    if(now > lastRebalance + rebalanceInterval && rebalanceEnabled){	
+		uint256 lpBalance = IBEP20(pancakeswapPair).balanceOf(address(this));	
+		if(lpBalance > 100) {	
+		    _rebalance(lpBalance);	
+		    swap = false;	
+		}	
+	    } 	
+	   if(swap) {	
+		uint256 contractTokenBalance = balanceOf(address(this));	
+		bool overMinTokenBalance = contractTokenBalance >= minTokensBeforeSwap;	
+		if (overMinTokenBalance && sender != pancakeswapPair && swapAndLiquifyEnabled) {	
+		    swapAndLiquify(contractTokenBalance);	
+		    rewardLiquidityProviders();	
+		}	
+	   }	
+	}	
+
+
+	uint256 transferAmount = amount;	
+	uint256 rate = _getReflectionRate();	
+
+
+	if(!isExcludedFromFee[_msgSender()] && !isExcludedFromFee[recipient] && !inSwapAndLiquify){	
+	    transferAmount = collectFee(sender,amount,rate);	
+	}	
+
+	//transfer reflection	
+	_reflectionBalance[sender] = _reflectionBalance[sender].sub(amount.mul(rate));	
+	_reflectionBalance[recipient] = _reflectionBalance[recipient].add(transferAmount.mul(rate));	
+
+	//if any account belongs to the excludedAccount transfer token	
+	if (_isExcluded[sender]) {	
+	    _tokenBalance[sender] = _tokenBalance[sender].sub(amount);	
+	}	
+
+	if (_isExcluded[recipient]) {	
+	    _tokenBalance[recipient] = _tokenBalance[recipient].add(transferAmount);	
+	}	
+
+	emit Transfer(sender, recipient, transferAmount);	
+    }	
+
+    function collectFee(address account, uint256 amount, uint256 rate) private returns (uint256) {	
+	uint256 transferAmount = amount;	
+
+	//tax fee	
+	if(_taxFee != 0) {	
+	    uint256 taxFee = amount.mul(_taxFee).div(10**(_feeDecimal + 2));	
+	    transferAmount = transferAmount.sub(taxFee);	
+	    _reflectionTotal = _reflectionTotal.sub(taxFee.mul(rate));	
+	    _taxFeeTotal = _taxFeeTotal.add(taxFee);	
+	}	
+
+	//take liquidity fee	
+	if(_liquidityFee != 0) {	
+	    uint256 liquidityFee = amount.mul(_liquidityFee).div(10**(_feeDecimal + 2));	
+	    transferAmount = transferAmount.sub(liquidityFee);	
+	    _reflectionBalance[address(this)] = _reflectionBalance[address(this)].add(liquidityFee.mul(rate));	
+	    _liquidityFeeTotal = _liquidityFeeTotal.add(liquidityFee);	
+	    emit Transfer(account,address(this),liquidityFee);	
+	}	
+
+	//take lp Reward fee	
+	if(_lpRewardFee != 0)  {	
+	    uint256 lpRewardFee = amount.mul(_lpRewardFee).div(10**(_feeDecimal + 2));	
+	    transferAmount = transferAmount.sub(lpRewardFee);	
+	    _reflectionBalance[rewardWallet] = _reflectionBalance[rewardWallet].add(lpRewardFee.mul(rate));	
+	    _lpRewardFeeTotal = _lpRewardFeeTotal.add(lpRewardFee);	
+	    emit Transfer(account,rewardWallet,lpRewardFee);	
+	}	
+
+	//take burn fee	
+	if(_burnFee != 0) {	
+	    uint256 burnFee = amount.mul(_burnFee).div(10**(_feeDecimal + 2));	
+	    transferAmount = transferAmount.sub(burnFee);	
+	    _tokenTotal = _tokenTotal.sub(burnFee);	
+	    _reflectionTotal = _reflectionTotal.sub(burnFee.mul(rate));	
+	    _burnFeeTotal = _burnFeeTotal.add(burnFee);	
+	    emit Transfer(account,address(0),burnFee);	
+	}	
+
+	return transferAmount;	
+    }	
+
+    function _getReflectionRate() private view returns (uint256) {	
+	uint256 reflectionSupply = _reflectionTotal;	
+	uint256 tokenSupply = _tokenTotal;	
+	for (uint256 i = 0; i < _excluded.length; i++) {	
+	    if (	
+		_reflectionBalance[_excluded[i]] > reflectionSupply ||	
+		_tokenBalance[_excluded[i]] > tokenSupply	
+	    ) return _reflectionTotal.div(_tokenTotal);	
+	    reflectionSupply = reflectionSupply.sub(	
+		_reflectionBalance[_excluded[i]]	
+	    );	
+	    tokenSupply = tokenSupply.sub(_tokenBalance[_excluded[i]]);	
+	}	
+	if (reflectionSupply < _reflectionTotal.div(_tokenTotal))	
+	    return _reflectionTotal.div(_tokenTotal);	
+	return reflectionSupply.div(tokenSupply);	
+    }	
+
+     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {	
+
+	// split the contract balance except swapCallerFee into halves	
+	uint256 lockedForSwap = contractTokenBalance.sub(_swapCallerFee);	
+
+	// split the contract balance into halves	
+	uint256 half = lockedForSwap.div(2);	
+	uint256 otherHalf = lockedForSwap.sub(half);	
+
+	/* capture the contract's current ETH balance.	
+	 * this is so that we can capture exactly the amount of ETH that the	
+	 * swap creates, and not make the liquidity event include any ETH that	
+	 * has been manually sent to the contract 	
+	 */	
+
+	uint256 initialBalance = address(this).balance;	
+
+	// swap tokens for ETH	
+	swapTokensForEth(half); 	
+
+	// how much ETH did we just swap into?	
+	uint256 newBalance = address(this).balance.sub(initialBalance);	
+
+	// add liquidity to pancakeswap	
+	addLiquidity(otherHalf, newBalance);	
+
+	emit SwapAndLiquify(half, newBalance, otherHalf);	
+
+	//give the swap caller fee	
+	_transfer(address(this), tx.origin, _swapCallerFee);	
+    }	
+
+    function swapTokensForEth(uint256 tokenAmount) private {	
+
+	// generate the pancakeswap pair path of token -> weth	
+	address[] memory path = new address[](2);	
+	path[0] = address(this);	
+	path[1] = pancakeRouter.WETH();	
+
+
+	_approve(address(this), address(pancakeRouter), tokenAmount);	
+
+	// make the swap	
+	pancakeRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(	
+	    tokenAmount,	
+	    0, // accept any amount of ETH	
+	    path,	
+	    address(this),	
+	    block.timestamp	
+	);	
+    }	
+
+    function swapEthForTokens(uint256 EthAmount) private {	
+	address[] memory path = new address[](2);	
+	path[0] = pancakeRouter.WETH();	
+	path[1] = address(this);	
+
+	pancakeRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: EthAmount}(	
+		0,	
+		path,	
+		address(balancer),	
+		block.timestamp	
+	    );	
+    }	
+
+    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {	
+
+	// approve token transfer to cover all possible scenarios	
+	_approve(address(this), address(pancakeRouter), tokenAmount);	
+
+
+	// add the liquidity	
+	pancakeRouter.addLiquidityETH{value: ethAmount}(	
+	    address(this),	
+	    tokenAmount,	
+	    0, // slippage is unavoidable	
+	    0, // slippage is unavoidable	
+	    address(this),	
+	    block.timestamp	
+	);	
+    }	
+
+    function removeLiquidityETH(uint256 lpAmount) private returns(uint ETHAmount) {	
+
+	IBEP20(pancakeswapPair).approve(address(pancakeRouter), lpAmount);	
+
+	(ETHAmount) = pancakeRouter.removeLiquidityETHSupportingFeeOnTransferTokens(	
+		address(this),	
+		lpAmount,	
+		0,	
+		0,	
+		address(this),	
+		block.timestamp	
+	    );	
+    }	
+
+    function rewardLiquidityProviders() private {	
+
+	uint256 tokenBalance = balanceOf(rewardWallet);	
+
+	if(tokenBalance > minTokenBeforeReward) {	
+	    uint256 rewardAmount = reflectionFromToken(tokenBalance, false);	
+	    _reflectionBalance[pancakeswapPair] = _reflectionBalance[pancakeswapPair].add(rewardAmount);	
+	    _reflectionBalance[rewardWallet] = _reflectionBalance[rewardWallet].sub(rewardAmount);	
+	    emit Transfer(rewardWallet, pancakeswapPair, tokenBalance);	
+	    IPancakePair(pancakeswapPair).sync();	
+	}	
+    }	
+
+    function rebalance() public {	
+	require(now > lastRebalance + rebalanceInterval && balanceOf(_msgSender()) >= 1000e18, 'TRIFORCE: Not allowed Rebalance.');	
+
+	uint256 lpBalance = IBEP20(pancakeswapPair).balanceOf(address(this));	
+	require(lpBalance > 100, "LP balance of contract should be greater than 100");	
+
+	_rebalance(lpBalance);	
+    }	
+
+    function _rebalance(uint256 lpBalance) private lockTheSwap {	
+
+	lastRebalance = now;	
+
+	uint256 amountToRemove = lpBalance.mul(_liquidityRemoveFee).div(10**(_feeDecimal + 2));	
+
+	// how much tokens we have before swap now, so we don't burn the liqudity tokens as well	
+	removeLiquidityETH(amountToRemove);	
+
+	// pancakeswap doesn't allow for a token to by itself, so we have to use an external account, which in this case is called the balancer	
+	swapEthForTokens(address(this).balance);	
+
+	// how much tokens we swaped into	
+	uint256 swapedTokens = balanceOf(address(balancer));	
+	uint256 rewardForCaller = swapedTokens.mul(_rebalanceCallerFee).div(10**(_feeDecimal + 2));	
+	uint256 amountToBurn = swapedTokens.sub(rewardForCaller);	
+
+	uint256 rate =  _getReflectionRate();	
+
+	_reflectionBalance[_msgSender()] = _reflectionBalance[_msgSender()].add(rewardForCaller.mul(rate));	
+	_reflectionBalance[address(balancer)] = 0;	
+
+	_burnFeeTotal = _burnFeeTotal.add(amountToBurn);	
+	_tokenTotal = _tokenTotal.sub(amountToBurn);	
+	_reflectionTotal = _reflectionTotal.sub(amountToBurn.mul(rate));	
+
+	emit Transfer(address(balancer), _msgSender(), rewardForCaller);	
+	emit Transfer(address(balancer), address(0), amountToBurn);	
+	emit Rebalance(amountToBurn);	
+    }	
+
+    function setEnableTrading(bool enabled) external onlyOwner() {	
+	tradingEnabled = enabled;	
+	TradingEnabled(enabled);	
+    }	
+
+    function setExcludedFromFee(address account, bool excluded) public onlyOwner {	
+	isExcludedFromFee[account] = excluded;	
+    }	
+
+    function setSwapAndLiquifyEnabled(bool enabled) public onlyOwner {	
+	swapAndLiquifyEnabled = enabled;	
+	SwapAndLiquifyEnabledUpdated(enabled);	
+    }	
+
+    function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
+	require(maxTxAmount >= 50000e18 , 'TRIFORCE: maxTxAmount should be greater than 50000');	
+	_maxTxAmount = maxTxAmount;	
+	emit MaxTxAmountUpdated(maxTxAmount);	
+    }
+
+    function setTaxFee(uint256 fee) public onlyOwner {	
+	_taxFee = fee;	
+    }	
+
+    function setBurnFee(uint256 fee) public onlyOwner {	
+	_burnFee = fee;	
+    }	
+
+    function setLiquidityFee(uint256 fee) public onlyOwner {	
+	_liquidityFee = fee;	
+    }	
+
+    function setLpRewardFee(uint256 fee) public onlyOwner {	
+	_lpRewardFee = fee;	
+    }	
+
+    function setLiquidityRemoveFee(uint256 fee) public onlyOwner {	
+	_liquidityRemoveFee = fee;	
+    }	
 
     function setRebalanceCallerFee(uint256 fee) public onlyOwner {	
 	_rebalanceCallerFee = fee;	

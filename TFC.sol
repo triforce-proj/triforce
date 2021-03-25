@@ -642,7 +642,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     uint256 public _rebalanceCallerFee = 500; // 5% of TFC tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism
     uint256 public _swapCallerFee = 200e18;   // 200 TFC tokens will be given to the caller of the transaction initiating automatic liquidity generation
 
-    uint256 public _maxTxAmount = 150000e18;  // maximum allowed 150000 TFC tokens per transaction
+    uint256 public _maxTxAmount = 50000e18;  // maximum allowed 50000 TFC tokens per transaction
 
     uint256 public _taxFeeTotal;	
     uint256 public _burnFeeTotal;

@@ -566,7 +566,7 @@ interface IPancakeRouter01 {
 	address to,	
 	uint deadline	
     ) external payable returns (uint amountToken, uint amountETH, uint liquidity);	
-}	
+}
 
 interface IPancakeRouter02 is IPancakeRouter01 {	
     function removeLiquidityETHSupportingFeeOnTransferTokens(	
@@ -576,7 +576,7 @@ interface IPancakeRouter02 is IPancakeRouter01 {
 	uint amountETHMin,	
 	address to,	
 	uint deadline	
-    ) external returns (uint amountETH);	
+    ) external returns (uint amountETH);
 
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(	
@@ -585,140 +585,138 @@ interface IPancakeRouter02 is IPancakeRouter01 {
 	address[] calldata path,	
 	address to,	
 	uint deadline	
-    ) external;	
+    ) external;
     function swapExactETHForTokensSupportingFeeOnTransferTokens(	
 	uint amountOutMin,	
 	address[] calldata path,	
 	address to,	
 	uint deadline	
-    ) external payable;	
+    ) external payable;
     function swapExactTokensForETHSupportingFeeOnTransferTokens(	
 	uint amountIn,	
 	uint amountOutMin,	
 	address[] calldata path,	
 	address to,	
 	uint deadline	
-    ) external;	
-}	
+    ) external;
+}
 
-contract RewardWallet {	
-    constructor() public {	
-    }	
-}	
+contract RewardWallet {
+    constructor() public {
+    }
+}
 
-contract Balancer {	
-    constructor() public {	
-    }	
-}	
+contract Balancer {
+    constructor() public {
+    }
+}
 		
 contract TRIFORCE is Context, IBEP20, Ownable {	
-    using SafeMath for uint256;	
-    using Address for address;	
+    using SafeMath for uint256;
+    using Address for address;
 
-    string private _name = "TRIFORCE";	
-    string private _symbol = "TFC";	
-    uint8 private _decimals = 18;	
+    string private _name = "TRIFORCE";
+    string private _symbol = "TFC";
+    uint8 private _decimals = 18;
 
-    mapping(address => uint256) internal _reflectionBalance;	
-    mapping(address => uint256) internal _tokenBalance;	
-    mapping(address => mapping(address => uint256)) internal _allowances;	
+    mapping(address => uint256) internal _reflectionBalance;
+    mapping(address => uint256) internal _tokenBalance;
+    mapping(address => mapping(address => uint256)) internal _allowances;
 
-    uint256 private constant MAX = ~uint256(0);	
-    uint256 internal _tokenTotal = 10_000_000e18; // 10 million total supply	
-    uint256 internal _reflectionTotal = (MAX - (MAX % _tokenTotal));	
+    uint256 private constant MAX = ~uint256(0);
+    uint256 internal _tokenTotal = 10_000_000e18; // 10 million total supply
+    uint256 internal _reflectionTotal = (MAX - (MAX % _tokenTotal));
 
-    mapping(address => bool) isExcludedFromFee;	
-    mapping(address => bool) internal _isExcluded;	
-    address[] internal _excluded;	
+    mapping(address => bool) isExcludedFromFee;
+    mapping(address => bool) internal _isExcluded;
+    address[] internal _excluded;
 
-    //the fee contains two decimal places so 300 = 3%	
-    uint256 public _feeDecimal = 2;	
-    uint256 public _taxFee = 300; //3% of every transaction's TFC tokens will be collected as tax fee, and redistributed to reward holders	
-    uint256 public _burnFee = 300; // 3% of every transaction's TFC tokens will be burned 	
-    uint256 public _liquidityFee = 300; // 3% of every transaction's TFC tokens will be collected as liquidity fee, to automatically generate liquidity	
-    uint256 public _lpRewardFee = 0;	
+    //the fee contains two decimal places so 300 = 3%
+    uint256 public _feeDecimal = 2;
+    uint256 public _taxFee = 300; //3% of every transaction's TFC tokens will be collected as tax fee, and redistributed to reward holders
+    uint256 public _burnFee = 300; // 3% of every transaction's TFC tokens will be burned 
+    uint256 public _liquidityFee = 300; // 3% of every transaction's TFC tokens will be collected as liquidity fee, to automatically generate liquidity
+    uint256 public _lpRewardFee = 0;
 
-    uint256 public _liquidityRemoveFee = 300;  //3% of liquidity will be used for rebalancing mechanism	
-    uint256 public _rebalanceCallerFee = 500; // 5% of TFC tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism 	
-    uint256 public _swapCallerFee = 200e18;   // 200 TFC tokens will be given to the caller of the transaction initiating automatic liquidity generation	
+    uint256 public _liquidityRemoveFee = 300;  //3% of liquidity will be used for rebalancing mechanism
+    uint256 public _rebalanceCallerFee = 500; // 5% of TFC tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism
+    uint256 public _swapCallerFee = 200e18;   // 200 TFC tokens will be given to the caller of the transaction initiating automatic liquidity generation
 
-    uint256 public _maxTxAmount = 150000e18;  // maximum allowed 150000 TFC tokens per transaction	
+    uint256 public _maxTxAmount = 150000e18;  // maximum allowed 150000 TFC tokens per transaction
 
     uint256 public _taxFeeTotal;	
-    uint256 public _burnFeeTotal;	
-    uint256 public _liquidityFeeTotal;	
+    uint256 public _burnFeeTotal;
+    uint256 public _liquidityFeeTotal;
     uint256 public _lpRewardFeeTotal;	
 
+    bool public tradingEnabled = false;
+    bool private inSwapAndLiquify;
+    bool public swapAndLiquifyEnabled = false;
+    bool public rebalanceEnabled = true;
 
-    bool public tradingEnabled = false;	
-    bool private inSwapAndLiquify;	
-    bool public swapAndLiquifyEnabled = false;	
-    bool public rebalanceEnabled = true;	
+    uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance must have a minimum of 10000 TFC Tokens for automatic liquidity generation
+    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 TFC tokens for rewarding LP
 
-    uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance must have a minimum of 10000 TFC Tokens for automatic liquidity generation	
-    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 TFC tokens for rewarding LP	
+    uint256 public lastRebalance = now ;
+    uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour
 
-    uint256 public lastRebalance = now ;	
-    uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour	
-
-    IPancakeRouter02 public pancakeRouter;	
-    address public pancakeswapPair;	
+    IPancakeRouter02 public pancakeRouter;
+    address public pancakeswapPair;
     address public rewardWallet;	
-    address public balancer;	
+    address public balancer;
 
-    event TradingEnabled(bool enabled);	
-    event SwapAndLiquifyEnabledUpdated(bool enabled);	
-    event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);	
-    event Rebalance(uint256 amount);	
-	event MaxTxAmountUpdated(uint256 maxTxAmount);	
+    event TradingEnabled(bool enabled);
+    event SwapAndLiquifyEnabledUpdated(bool enabled);
+    event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
+    event Rebalance(uint256 amount);
+	event MaxTxAmountUpdated(uint256 maxTxAmount);
 
-    modifier lockTheSwap {	
-	inSwapAndLiquify = true;	
-	_;	
-	inSwapAndLiquify = false;	
-    }	
-
+    modifier lockTheSwap {
+	inSwapAndLiquify = true;
+	_;
+	inSwapAndLiquify = false;
+    }
 
     constructor() public {	
 
-       IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);	
-	 // Create a pancakeswap pair for this new token	
+       IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
+	 // Create a pancakeswap pair for this new token
 
-	pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())	
-	    .createPair(address(this), _pancakeRouter.WETH());	
+	pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())
+	    .createPair(address(this), _pancakeRouter.WETH());
 
-	pancakeRouter = _pancakeRouter;	
+	pancakeRouter = _pancakeRouter;
 
-	rewardWallet = address(new RewardWallet());	
-	balancer = address(new Balancer());	
+	rewardWallet = address(new RewardWallet());
+	balancer = address(new Balancer());
 
-	isExcludedFromFee[_msgSender()] = true;	
-	isExcludedFromFee[address(this)] = true;	
+	isExcludedFromFee[_msgSender()] = true;
+	isExcludedFromFee[address(this)] = true;
 
-	_reflectionBalance[_msgSender()] = _reflectionTotal;	
-	emit Transfer(address(0), _msgSender(), _tokenTotal);	
-    }	
+	_reflectionBalance[_msgSender()] = _reflectionTotal;
+	emit Transfer(address(0), _msgSender(), _tokenTotal);
+    }
 
-    function name() public view returns (string memory) {	
-	return _name;	
-    }	
+    function name() public view returns (string memory) {
+	return _name;
+    }
 
-    function symbol() public view returns (string memory) {	
-	return _symbol;	
-    }	
+    function symbol() public view returns (string memory) {
+	return _symbol;
+    }
 
-    function decimals() public view returns (uint8) {	
-	return _decimals;	
-    }	
+    function decimals() public view returns (uint8) {
+	return _decimals;
+    }
 
-    function totalSupply() public override view returns (uint256) {	
-	return _tokenTotal;	
-    }	
+    function totalSupply() public override view returns (uint256) {
+	return _tokenTotal;
+    }
 
-    function balanceOf(address account) public override view returns (uint256) {	
-	if (_isExcluded[account]) return _tokenBalance[account];	
+    function balanceOf(address account) public override view returns (uint256) {
+	if (_isExcluded[account]) return _tokenBalance[account];
 	return tokenFromReflection(_reflectionBalance[account]);	
-    }	
+    }
 
     function transfer(address recipient, uint256 amount)	
 	public	
@@ -726,8 +724,8 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	virtual	
 	returns (bool)	
     {	
-       _transfer(_msgSender(),recipient,amount);	
-	return true;	
+       _transfer(_msgSender(),recipient,amount);
+	return true;
     }	
 
     function allowance(address owner, address spender)	
@@ -736,27 +734,27 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	view	
 	returns (uint256)	
     {	
-	return _allowances[owner][spender];	
-    }	
+	return _allowances[owner][spender];
+    }
 
     function approve(address spender, uint256 amount)	
 	public	
 	override	
 	returns (bool)	
     {	
-	_approve(_msgSender(), spender, amount);	
-	return true;	
+	_approve(_msgSender(), spender, amount);
+	return true;
     }	
 
     function transferFrom(	
 	address sender,	
 	address recipient,	
 	uint256 amount	
-    ) public override virtual returns (bool) {	
-	_transfer(sender,recipient,amount);	
+    ) public override virtual returns (bool) {
+	_transfer(sender,recipient,amount);
 
-	_approve(sender,_msgSender(),_allowances[sender][_msgSender()].sub( amount,"BEP20: transfer amount exceeds allowance"));	
-	return true;	
+	_approve(sender,_msgSender(),_allowances[sender][_msgSender()].sub( amount,"BEP20: transfer amount exceeds allowance"));
+	return true;
     }	
 
     function increaseAllowance(address spender, uint256 addedValue)	
@@ -789,8 +787,8 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     }	
 
     function isExcluded(address account) public view returns (bool) {	
-	return _isExcluded[account];	
-    }	
+	return _isExcluded[account];
+    }
 
     function reflectionFromToken(uint256 tokenAmount, bool deductTransferFee)	
 	public	
@@ -877,13 +875,13 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	require(tradingEnabled || sender == owner() || recipient == owner() ||	
 		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
 
-		if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
-	    require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
-		}	
+	if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
+		require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
+	}	
 
 	//swapAndLiquify or rebalance(don't do both at once or it will cost too much gas)	
 
-	   if(!inSwapAndLiquify) {	
+	if(!inSwapAndLiquify) {	
 	    bool swap = true;	
 	    if(now > lastRebalance + rebalanceInterval && rebalanceEnabled){	
 		uint256 lpBalance = IBEP20(pancakeswapPair).balanceOf(address(this));	

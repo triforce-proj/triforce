@@ -611,7 +611,7 @@ contract Balancer {
     }
 }
 		
-contract TRIFORCE is Context, IBEP20, Ownable {	
+contract PYUKUMUKU is Context, IBEP20, Ownable {	
     using SafeMath for uint256;
     using Address for address;
 

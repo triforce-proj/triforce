@@ -1014,7 +1014,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	require(recipient != address(0), "BEP20: transfer to the zero address");	
 	require(amount > 0, "Transfer amount must be greater than zero");	
 	require(tradingEnabled || sender == owner() || recipient == owner() ||	
-		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
+		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked");	
 
 	if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
 		require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
@@ -1339,7 +1339,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	rebalanceEnabled = enabled;	
     }
 
-	//Admin function to remove tokens mistakenly sent to this address
+    // Admin function to remove tokens mistakenly sent to this address
     function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
         IBEP20(_tokenAddr).transfer(_to, _amount);
     }
@@ -1641,7 +1641,7 @@ contract TRIFORCE_POOLS is Ownable {
         blockRewardPercentage = _blockRewardPercentage;
     }
     
-    //Admin function to remove tokens mistakenly sent to this address
+    // Admin function to remove tokens mistakenly sent to this address
     function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
         IBEP20(_tokenAddr).transfer(_to, _amount);
     }

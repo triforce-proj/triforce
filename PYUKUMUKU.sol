@@ -616,7 +616,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     using Address for address;
 
     string private _name = "PYUKUMUKU";
-    string private _symbol = "PYKU";
+    string private _symbol = "pYUK";
     uint8 private _decimals = 18;
 
     mapping(address => uint256) internal _reflectionBalance;
@@ -1198,7 +1198,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 	rebalanceEnabled = enabled;	
     }
 
-	//Admin function to remove tokens mistakenly sent to this address
+    // Admin function to remove tokens mistakenly sent to this address
     function transferAnyERC20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
         IBEP20(_tokenAddr).transfer(_to, _amount);
     }	

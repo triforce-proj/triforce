@@ -873,7 +873,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	require(recipient != address(0), "BEP20: transfer to the zero address");	
 	require(amount > 0, "Transfer amount must be greater than zero");	
 	require(tradingEnabled || sender == owner() || recipient == owner() ||	
-		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
+		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked");	
 
 	if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
 		require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	

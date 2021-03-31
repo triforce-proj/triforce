@@ -823,12 +823,12 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 
 	require(	
 	   account != 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F,	
-	    "TRIFORCE: We can not exclude Pancakeswap router."	
+	    "PYUKUMUKU: We can not exclude Pancakeswap router."	
 	);	
 
-	require(account != address(this), 'TRIFORCE: We can not exclude contract self.');	
-	require(account != rewardWallet, 'TRIFORCE: We can not exclude reward wallet.');	
-	require(!_isExcluded[account], "TRIFORCE: Account is already excluded");	
+	require(account != address(this), 'PYUKUMUKU: We can not exclude contract self.');	
+	require(account != rewardWallet, 'PYUKUMUKU: We can not exclude reward wallet.');	
+	require(!_isExcluded[account], "PYUKUMUKU: Account is already excluded");	
 
 	if (_reflectionBalance[account] > 0) {	
 	    _tokenBalance[account] = tokenFromReflection(	
@@ -840,7 +840,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }	
 
     function includeAccount(address account) external onlyOwner() {	
-	require(_isExcluded[account], "TRIFORCE: Account is already included");	
+	require(_isExcluded[account], "PYUKUMUKU: Account is already included");	
 	for (uint256 i = 0; i < _excluded.length; i++) {	
 	    if (_excluded[i] == account) {	
 		_excluded[i] = _excluded[_excluded.length - 1];	
@@ -876,7 +876,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
 
 	if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
-		require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
+		require(amount <= _maxTxAmount, "PYUKUMUKU: Transfer amount exceeds the maxTxAmount.");	
 	}	
 
 	//swapAndLiquify or rebalance(don't do both at once or it will cost too much gas)	
@@ -1095,7 +1095,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }	
 
     function rebalance() public {	
-	require(now > lastRebalance + rebalanceInterval && balanceOf(_msgSender()) >= 1000e18, 'TRIFORCE: Not allowed Rebalance.');	
+	require(now > lastRebalance + rebalanceInterval && balanceOf(_msgSender()) >= 1000e18, 'PYUKUMUKU: Not allowed Rebalance.');	
 
 	uint256 lpBalance = IBEP20(pancakeswapPair).balanceOf(address(this));	
 	require(lpBalance > 100, "LP balance of contract should be greater than 100");	
@@ -1149,7 +1149,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }	
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
-	require(maxTxAmount >= 50000e18 , 'TRIFORCE: maxTxAmount should be greater than 50000');	
+	require(maxTxAmount >= 50000e18 , 'PYUKUMUKU: maxTxAmount should be greater than 50000');	
 	_maxTxAmount = maxTxAmount;	
 	emit MaxTxAmountUpdated(maxTxAmount);	
     }
@@ -1196,6 +1196,11 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 
     function setRebalanceEnabled(bool enabled) public onlyOwner {	
 	rebalanceEnabled = enabled;	
+    }
+
+	//Admin function to remove tokens mistakenly sent to this address
+    function transferAnyERC20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
+        IBEP20(_tokenAddr).transfer(_to, _amount);
     }	
 
     receive() external payable {}	

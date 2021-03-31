@@ -1196,7 +1196,12 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     function setRebalanceEnabled(bool enabled) public onlyOwner {	
 	rebalanceEnabled = enabled;	
-    }	
+    }
+
+	//Admin function to remove tokens mistakenly sent to this address
+    function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
+        IBEP20(_tokenAddr).transfer(_to, _amount);
+    }
 
     receive() external payable {}	
 }

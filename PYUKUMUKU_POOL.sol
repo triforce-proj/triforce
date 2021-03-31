@@ -757,7 +757,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     using Address for address;
 
     string private _name = "PYUKUMUKU";
-    string private _symbol = "PYKU";
+    string private _symbol = "pYUK";
     uint8 private _decimals = 18;
 
     mapping(address => uint256) internal _reflectionBalance;

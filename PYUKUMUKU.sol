@@ -669,7 +669,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
-	event MaxTxAmountUpdated(uint256 maxTxAmount);
+    event MaxTxAmountUpdated(uint256 maxTxAmount);
 
     modifier lockTheSwap {
 	inSwapAndLiquify = true;
@@ -680,7 +680,8 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     constructor() public {	
 
        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
-	 // Create a pancakeswap pair for this new token
+
+       // Create a pancakeswap pair for this new token
 
 	pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())
 	    .createPair(address(this), _pancakeRouter.WETH());
@@ -873,7 +874,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 	require(recipient != address(0), "BEP20: transfer to the zero address");	
 	require(amount > 0, "Transfer amount must be greater than zero");	
 	require(tradingEnabled || sender == owner() || recipient == owner() ||	
-		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
+		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked");	
 
 	if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
 		require(amount <= _maxTxAmount, "PYUKUMUKU: Transfer amount exceeds the maxTxAmount.");	

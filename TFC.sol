@@ -671,7 +671,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
-	event MaxTxAmountUpdated(uint256 maxTxAmount);
+    event MaxTxAmountUpdated(uint256 maxTxAmount);
 
     modifier lockTheSwap {
 	inSwapAndLiquify = true;
@@ -1142,7 +1142,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	TradingEnabled(enabled);	
     }	
 
-	function setEnableSelling(bool enabled) external onlyOwner() {	
+    function setEnableSelling(bool enabled) external onlyOwner() {	
 	sellingEnabled = enabled;	
 	SellingEnabled(enabled);	
     }

@@ -633,16 +633,16 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 
     //the fee contains two decimal places so 300 = 3%
     uint256 public _feeDecimal = 2;
-    uint256 public _taxFee = 100; //1% of every transaction's PYKU tokens will be collected as tax fee, and redistributed to reward holders
-    uint256 public _burnFee = 800; // 8% of every transaction's PYKU tokens will be burned 
-    uint256 public _liquidityFee = 300; // 3% of every transaction's PYKU tokens will be collected as liquidity fee, to automatically generate liquidity
+    uint256 public _taxFee = 100; //1% of every transaction's pYUK tokens will be collected as tax fee, and redistributed to reward holders
+    uint256 public _burnFee = 800; // 8% of every transaction's pYUK tokens will be burned 
+    uint256 public _liquidityFee = 300; // 3% of every transaction's pYUK tokens will be collected as liquidity fee, to automatically generate liquidity
     uint256 public _lpRewardFee = 0;
 
     uint256 public _liquidityRemoveFee = 300;  //3% of liquidity will be used for rebalancing mechanism
-    uint256 public _rebalanceCallerFee = 500; // 5% of PYKU tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism
-    uint256 public _swapCallerFee = 200e18;   // 200 PYKU tokens will be given to the caller of the transaction initiating automatic liquidity generation
+    uint256 public _rebalanceCallerFee = 500; // 5% of pYUK tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism
+    uint256 public _swapCallerFee = 200e18;   // 200 pYUK tokens will be given to the caller of the transaction initiating automatic liquidity generation
 
-    uint256 public _maxTxAmount = 50000e18;  // maximum allowed 50000 PYKU tokens per transaction
+    uint256 public _maxTxAmount = 50000e18;  // maximum allowed 50000 pYUK tokens per transaction
 
     uint256 public _taxFeeTotal;	
     uint256 public _burnFeeTotal;
@@ -654,8 +654,8 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     bool public swapAndLiquifyEnabled = false;
     bool public rebalanceEnabled = true;
 
-    uint256 public minTokensBeforeSwap = 10000e18; // Contract's PYKU token balance must have a minimum of 10000 PYKU Tokens for automatic liquidity generation
-    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 PYKU tokens for rewarding LP
+    uint256 public minTokensBeforeSwap = 10000e18; // Contract's pYUK token balance must have a minimum of 10000 pYUK Tokens for automatic liquidity generation
+    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 pYUK tokens for rewarding LP
 
     uint256 public lastRebalance = now ;
     uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour

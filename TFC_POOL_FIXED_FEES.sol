@@ -752,12 +752,12 @@ library SafeERC20 {
     }
 }
 
-contract PYUKUMUKU is Context, IBEP20, Ownable {	
+contract TRIFORCE is Context, IBEP20, Ownable {	
     using SafeMath for uint256;
     using Address for address;
 
-    string private _name = "PYUKUMUKU";
-    string private _symbol = "pYUK";
+    string private _name = "TRIFORCE";
+    string private _symbol = "TFC";
     uint8 private _decimals = 18;
 
     mapping(address => uint256) internal _reflectionBalance;
@@ -765,7 +765,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     mapping(address => mapping(address => uint256)) internal _allowances;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 internal _tokenTotal = 5_000_000e18; // 5 million total supply
+    uint256 internal _tokenTotal = 10_000_000e18; // 10 million total supply
     uint256 internal _reflectionTotal = (MAX - (MAX % _tokenTotal));
 
     mapping(address => bool) isExcludedFromFee;
@@ -774,16 +774,16 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 
     //the fee contains two decimal places so 300 = 3%
     uint256 public _feeDecimal = 2;
-    uint256 public _taxFee = 100; //1% of every transaction's pYUK tokens will be collected as tax fee, and redistributed to reward holders
-    uint256 public _burnFee = 800; // 8% of every transaction's pYUK tokens will be burned 
-    uint256 public _liquidityFee = 300; // 3% of every transaction's pYUK tokens will be collected as liquidity fee, to automatically generate liquidity
+    uint256 public _taxFee = 300; //3% of every transaction's TFC tokens will be collected as tax fee, and redistributed to reward holders
+    uint256 public _burnFee = 300; // 3% of every transaction's TFC tokens will be burned 
+    uint256 public _liquidityFee = 300; // 3% of every transaction's TFC tokens will be collected as liquidity fee, to automatically generate liquidity
     uint256 public _lpRewardFee = 0;
 
     uint256 public _liquidityRemoveFee = 300;  //3% of liquidity will be used for rebalancing mechanism
-    uint256 public _rebalanceCallerFee = 500; // 5% of pYUK tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism
-    uint256 public _swapCallerFee = 200e18;   // 200 pYUK tokens will be given to the caller of the transaction initiating automatic liquidity generation
+    uint256 public _rebalanceCallerFee = 500; // 5% of TFC tokens generated after rebalancing are given to the caller of the transaction which initiates rebalancing mechanism
+    uint256 public _swapCallerFee = 200e18;   // 200 TFC tokens will be given to the caller of the transaction initiating automatic liquidity generation
 
-    uint256 public _maxTxAmount = 50000e18;  // maximum allowed 50000 pYUK tokens per transaction
+    uint256 public _maxTxAmount = 50000e18;  // maximum allowed 50000 TFC tokens per transaction
 
     uint256 public _taxFeeTotal;	
     uint256 public _burnFeeTotal;
@@ -795,8 +795,8 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     bool public swapAndLiquifyEnabled = false;
     bool public rebalanceEnabled = true;
 
-    uint256 public minTokensBeforeSwap = 10000e18; // Contract's pYUK token balance must have a minimum of 10000 pYUK Tokens for automatic liquidity generation
-    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 pYUK tokens for rewarding LP
+    uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance must have a minimum of 10000 TFC Tokens for automatic liquidity generation
+    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 TFC tokens for rewarding LP
 
     uint256 public lastRebalance = now ;
     uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour
@@ -964,12 +964,12 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 
 	require(	
 	   account != 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F,	
-	    "PYUKUMUKU: We can not exclude Pancakeswap router."	
+	    "TRIFORCE: We can not exclude Pancakeswap router."	
 	);	
 
-	require(account != address(this), 'PYUKUMUKU: We can not exclude contract self.');	
-	require(account != rewardWallet, 'PYUKUMUKU: We can not exclude reward wallet.');	
-	require(!_isExcluded[account], "PYUKUMUKU: Account is already excluded");	
+	require(account != address(this), 'TRIFORCE: We can not exclude contract self.');	
+	require(account != rewardWallet, 'TRIFORCE: We can not exclude reward wallet.');	
+	require(!_isExcluded[account], "TRIFORCE: Account is already excluded");	
 
 	if (_reflectionBalance[account] > 0) {	
 	    _tokenBalance[account] = tokenFromReflection(	
@@ -981,7 +981,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }	
 
     function includeAccount(address account) external onlyOwner() {	
-	require(_isExcluded[account], "PYUKUMUKU: Account is already included");	
+	require(_isExcluded[account], "TRIFORCE: Account is already included");	
 	for (uint256 i = 0; i < _excluded.length; i++) {	
 	    if (_excluded[i] == account) {	
 		_excluded[i] = _excluded[_excluded.length - 1];	
@@ -1017,7 +1017,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
 		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked before presale.");	
 
 	if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
-		require(amount <= _maxTxAmount, "PYUKUMUKU: Transfer amount exceeds the maxTxAmount.");	
+		require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
 	}	
 
 	//swapAndLiquify or rebalance(don't do both at once or it will cost too much gas)	
@@ -1236,7 +1236,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }	
 
     function rebalance() public {	
-	require(now > lastRebalance + rebalanceInterval && balanceOf(_msgSender()) >= 1000e18, 'PYUKUMUKU: Not allowed Rebalance.');	
+	require(now > lastRebalance + rebalanceInterval && balanceOf(_msgSender()) >= 1000e18, 'TRIFORCE: Not allowed Rebalance.');	
 
 	uint256 lpBalance = IBEP20(pancakeswapPair).balanceOf(address(this));	
 	require(lpBalance > 100, "LP balance of contract should be greater than 100");	
@@ -1290,7 +1290,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }	
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
-	require(maxTxAmount >= 50000e18 , 'PYUKUMUKU: maxTxAmount should be greater than 50000');	
+	require(maxTxAmount >= 50000e18 , 'TRIFORCE: maxTxAmount should be greater than 50000');	
 	_maxTxAmount = maxTxAmount;	
 	emit MaxTxAmountUpdated(maxTxAmount);	
     }
@@ -1340,29 +1340,29 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }
 
 	//Admin function to remove tokens mistakenly sent to this address
-    function transferAnyERC20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
+    function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
         IBEP20(_tokenAddr).transfer(_to, _amount);
-    }	
+    }
 
     receive() external payable {}	
 }
 
-contract PYUKUMUKU_POOLS is Ownable {
+contract TRIFORCE_POOLS is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     // Info of each user.
     struct UserInfo {
-        uint256 amount; // How many Staking Tokens the user has provided.
+        uint256 amount; // How many Triforce Tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
         //
-        // We do some fancy math here. Basically, any point in time, the amount of PYUKUMUKU tokens
+        // We do some fancy math here. Basically, any point in time, the amount of TRIFORCE tokens
         // entitled to a user but is pending to be distributed is:
         //
-        //   pending reward = (user.amount * pool.accPyukumukuPerShare) - user.rewardDebt
+        //   pending reward = (user.amount * pool.accTriforcePerShare) - user.rewardDebt
         //
-        // Whenever a user deposits or withdraws Staking Tokens to a pool. Here's what happens:
-        //   1. The pool's `accPyukumukuPerShare` (and `lastRewardBlock`) gets updated.
+        // Whenever a user deposits or withdraws Triforce Tokens to a pool. Here's what happens:
+        //   1. The pool's `accTriforcePerShare` (and `lastRewardBlock`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
         //   4. User's `rewardDebt` gets updated.
@@ -1370,76 +1370,76 @@ contract PYUKUMUKU_POOLS is Ownable {
 
     // Info of each pool.
     struct PoolInfo {
-        IERC20 stakingToken; // Address of Staking Token contract.
-        uint256 allocPoint; // How many allocation points assigned to this pool. PYUKUMUKU tokens to distribute per block.
-        uint256 lastRewardBlock; // Last block number that PYUKUMUKU tokens distribution occurs.
-        uint256 accPyukumukuPerShare; // Accumulated PYUKUMUKU tokens per share, times 1e12. See below.
+        IERC20 triforceToken; // Address of Triforce Token contract.
+        uint256 allocPoint; // How many allocation points assigned to this pool. TRIFORCE tokens to distribute per block.
+        uint256 lastRewardBlock; // Last block number that TRIFORCE tokens distribution occurs.
+        uint256 accTriforcePerShare; // Accumulated TRIFORCE tokens per share, times 1e12. See below.
     }
 
-    PYUKUMUKU public immutable pyukumuku; // The PYUKUMUKU ERC-20 Token.
-    uint256 private pyukumukuPerBlock; // PYUKUMUKU tokens distributed per block. Use getPyukumukuPerBlock() to get the updated reward.
+    testTRIFORCE public immutable triforce; // The TRIFORCE ERC-20 Token.
+    uint256 private triforcePerBlock; // TRIFORCE tokens distributed per block. Use getTriforcePerBlock() to get the updated reward.
 
     PoolInfo[] public poolInfo; // Info of each pool.
-    mapping(uint256 => mapping(address => UserInfo)) public userInfo; // Info of each user that stakes Staking Tokens.
+    mapping(uint256 => mapping(address => UserInfo)) public userInfo; // Info of each user that stakes Triforce Tokens.
     uint256 public totalAllocPoint; // Total allocation points. Must be the sum of all allocation points in all pools.
-    uint256 public startBlock; // The block number when PYUKUMUKU token mining starts.
+    uint256 public startBlock; // The block number when TRIFORCE token mining starts.
 
-    uint256 public blockRewardUpdateCycle = 1 days; // The cycle in which the pyukumukuPerBlock gets updated.
-    uint256 public blockRewardLastUpdateTime = block.timestamp; // The timestamp when the block pyukumukuPerBlock was last updated.
+    uint256 public blockRewardUpdateCycle = 1 days; // The cycle in which the triforcePerBlock gets updated.
+    uint256 public blockRewardLastUpdateTime = block.timestamp; // The timestamp when the block triforcePerBlock was last updated.
     uint256 public blocksPerDay = 28750; // The estimated number of mined blocks per day.
-    uint256 public blockRewardPercentage = 1; // The percentage used for pyukumukuPerBlock calculation.
+    uint256 public blockRewardPercentage = 1; // The percentage used for triforcePerBlock calculation.
 
     uint256 public stakingFeeRate = 30; // FeeRate
     uint256 public protocolFeeRate = 90; // FeeRate
 
-    mapping(address => bool) public addedLpTokens; // Used for preventing Staking Tokens from being added twice in add().
+    mapping(address => bool) public addedtriforceTokens; // Used for preventing Triforce Tokens from being added twice in add().
     
-    address public treasuryWallet;
+    address public devWallet;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
     
     constructor(
-        PYUKUMUKU _pyukumuku,
+        testTRIFORCE _triforce,
         uint256 _startBlock
     ) public {
-        require(address(_pyukumuku) != address(0), "PYUKUMUKU address is invalid");
+        require(address(_triforce) != address(0), "TRIFORCE address is invalid");
         require(_startBlock >= block.number, "startBlock is before current block");
         
-        pyukumuku = _pyukumuku;
+        triforce = _triforce;
         startBlock = _startBlock;
         
-        treasuryWallet = address(0xd7739E13d4c791646cDbAA8eC6263dfedba3Dfb1);
+        devWallet = address(0xd7739E13d4c791646cDbAA8eC6263dfedba3Dfb1);
     }
 
-    modifier updatePyukumukuPerBlock() {
-        (uint256 blockReward, bool update) = getPyukumukuPerBlock();
+    modifier updateTriforcePerBlock() {
+        (uint256 blockReward, bool update) = getTriforcePerBlock();
         if (update) {
-            pyukumukuPerBlock = blockReward;
+            triforcePerBlock = blockReward;
             blockRewardLastUpdateTime = block.timestamp;
         }
         _;
     }
 
-    function getPyukumukuPerBlock() public view returns (uint256, bool) {
+    function getTriforcePerBlock() public view returns (uint256, bool) {
         if (block.number < startBlock) {
             return (0, false);
         }
 
-        uint256 poolReward = pyukumuku.balanceOf(address(this));
+        uint256 poolReward = triforce.balanceOf(address(this));
         if (poolReward == 0) {
-            return (0, pyukumukuPerBlock != 0);
+            return (0, triforcePerBlock != 0);
         }
 
-        if (block.timestamp >= getPyukumukuPerBlockUpdateTime() || pyukumukuPerBlock == 0) {
+        if (block.timestamp >= getTriforcePerBlockUpdateTime() || triforcePerBlock == 0) {
             return (poolReward.mul(blockRewardPercentage).div(100).div(blocksPerDay), true);
         }
 
-        return (pyukumukuPerBlock, false);
+        return (triforcePerBlock, false);
     }
 
-    function getPyukumukuPerBlockUpdateTime() public view returns (uint256) {
+    function getTriforcePerBlockUpdateTime() public view returns (uint256) {
         // if blockRewardUpdateCycle = 1 day then roundedUpdateTime = today's UTC midnight
         uint256 roundedUpdateTime = blockRewardLastUpdateTime - (blockRewardLastUpdateTime % blockRewardUpdateCycle);
         // if blockRewardUpdateCycle = 1 day then calculateRewardTime = tomorrow's UTC midnight
@@ -1451,14 +1451,14 @@ contract PYUKUMUKU_POOLS is Ownable {
         return poolInfo.length;
     }
 
-    // Add a new staking token to the pool. Can only be called by the owner.
+    // Add a new lp to the pool. Can only be called by the owner.
     function add(
         uint256 _allocPoint,
-        IERC20 _stakingToken,
+        IERC20 _triforceToken,
         bool _withUpdate
     ) public onlyOwner {
-        require(address(_stakingToken) != address(0), "Staking Token is invalid");
-        require(!addedLpTokens[address(_stakingToken)], "Staking Token is already added");
+        require(address(_triforceToken) != address(0), "Triforce Token is invalid");
+        require(!addedtriforceTokens[address(_triforceToken)], "Triforce Token is already added");
 
         require(_allocPoint >= 5 && _allocPoint <= 10, "_allocPoint is outside of range 5-10");
 
@@ -1468,16 +1468,16 @@ contract PYUKUMUKU_POOLS is Ownable {
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
-            stakingToken : _stakingToken,
+            triforceToken : _triforceToken,
             allocPoint : _allocPoint,
             lastRewardBlock : lastRewardBlock,
-            accPyukumukuPerShare : 0
+            accTriforcePerShare : 0
         }));
 
-        addedLpTokens[address(_stakingToken)] = true;
+        addedLpTokens[address(_lpToken)] = true;
     }
 
-    // Update the given pool's PYUKUMUKU token allocation point. Can only be called by the owner.
+    // Update the given pool's TRIFORCE token allocation point. Can only be called by the owner.
     function set(
         uint256 _pid,
         uint256 _allocPoint,
@@ -1492,19 +1492,19 @@ contract PYUKUMUKU_POOLS is Ownable {
         poolInfo[_pid].allocPoint = _allocPoint;
     }
 
-    // View function to see pending PYUKUMUKU tokens on frontend.
+    // View function to see pending TRIFORCE tokens on frontend.
     function pendingRewards(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accPyukumukuPerShare = pool.accPyukumukuPerShare;
-        uint256 lpSupply = pool.stakingToken.balanceOf(address(this));
+        uint256 accTriforcePerShare = pool.accTriforcePerShare;
+        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = block.number.sub(pool.lastRewardBlock);
-            (uint256 blockReward, ) = getPyukumukuPerBlock();
-            uint256 pyukumukuReward = multiplier.mul(blockReward).mul(pool.allocPoint).div(totalAllocPoint);
-            accPyukumukuPerShare = accPyukumukuPerShare.add(pyukumukuReward.mul(1e12).div(lpSupply));
+            (uint256 blockReward, ) = getTriforcePerBlock();
+            uint256 triforceReward = multiplier.mul(blockReward).mul(pool.allocPoint).div(totalAllocPoint);
+            accTriforcePerShare = accTriforcePerShare.add(triforceReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accPyukumukuPerShare).div(1e12).sub(user.rewardDebt);
+        return user.amount.mul(accTriforcePerShare).div(1e12).sub(user.rewardDebt);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
@@ -1517,28 +1517,28 @@ contract PYUKUMUKU_POOLS is Ownable {
 
     // Update reward variables of the given pool to be up-to-date when lpSupply changes
     // For every deposit/withdraw pool recalculates accumulated token value
-    function updatePool(uint256 _pid) public updatePyukumukuPerBlock {
+    function updatePool(uint256 _pid) public updateTriforcePerBlock {
         PoolInfo storage pool = poolInfo[_pid];
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
 
-        uint256 lpSupply = pool.stakingToken.balanceOf(address(this));
+        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
 
         uint256 multiplier = block.number.sub(pool.lastRewardBlock);
-        uint256 pyukumukuReward = multiplier.mul(pyukumukuPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+        uint256 triforceReward = multiplier.mul(triforcePerBlock).mul(pool.allocPoint).div(totalAllocPoint);
 
-        // no minting is required, the contract should have PYUKUMUKU token balance pre-allocated
-        // accumulated PYUKUMUKU per share is stored multiplied by 10^12 to allow small 'fractional' values
-        pool.accPyukumukuPerShare = pool.accPyukumukuPerShare.add(pyukumukuReward.mul(1e12).div(lpSupply));
+        // no minting is required, the contract should have TRIFORCE token balance pre-allocated
+        // accumulated TRIFORCE per share is stored multiplied by 10^12 to allow small 'fractional' values
+        pool.accTriforcePerShare = pool.accTriforcePerShare.add(triforceReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit Staking Tokens to PyukumukuFarming for PYUKUMUKU token allocation.
+    // Deposit Triforce Tokens to TriforceFarming for TRIFORCE token allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -1546,20 +1546,25 @@ contract PYUKUMUKU_POOLS is Ownable {
         updatePool(_pid);
 
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accPyukumukuPerShare).div(1e12).sub(user.rewardDebt);
+            uint256 pending = user.amount.mul(pool.accTriforcePerShare).div(1e12).sub(user.rewardDebt);
             if (pending > 0) {
                 safeTokenTransfer(msg.sender, pending);
             }
         }
         if (_amount > 0) {
+            
+            //remove protocolFeeRate
+            uint _amountLessProtocolFee = _amount.mul(protocolFeeRate).div(1e4);
             pool.triforceToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-            user.amount = user.amount.add(_amount);
+
+            //add amount less protocolFeeRate to user storage
+            user.amount = user.amount.add(_amountLessProtocolFee);
         }
-        user.rewardDebt = user.amount.mul(pool.accPyukumukuPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accTriforcePerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    // Withdraw Staking Tokens from PyukumukuFarming
+    // Withdraw Triforce Tokens from TriforceFarming
     function withdraw(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -1567,7 +1572,7 @@ contract PYUKUMUKU_POOLS is Ownable {
 
         updatePool(_pid);
 
-        uint256 pending = user.amount.mul(pool.accPyukumukuPerShare).div(1e12).sub(user.rewardDebt);
+        uint256 pending = user.amount.mul(pool.accTriforcePerShare).div(1e12).sub(user.rewardDebt);
         
         uint amountAfterFee;
         
@@ -1576,17 +1581,17 @@ contract PYUKUMUKU_POOLS is Ownable {
         }
         if (_amount > 0) {
             
-            //add withdraw fee editable
+            //add withdraw fee of 3%
             uint fee = _amount.mul(stakingFeeRate).div(1e4);
             amountAfterFee = _amount.sub(fee);
-            pool.triforceToken.safeTransfer(treasuryWallet, fee);
+            pool.triforceToken.safeTransfer(devWallet, fee);
             pool.triforceToken.safeTransfer(address(msg.sender), amountAfterFee);
             
             user.amount = user.amount.sub(_amount);
         }
         
-        user.rewardDebt = user.amount.mul(pool.accPyukumukuPerShare).div(1e12);
-        emit Withdraw(msg.sender, _pid, _amount);
+        user.rewardDebt = user.amount.mul(pool.accTriforcePerShare).div(1e12);
+        emit Withdraw(msg.sender, _pid, amountAfterFee);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -1594,20 +1599,20 @@ contract PYUKUMUKU_POOLS is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
-        pool.stakingToken.safeTransfer(address(msg.sender), user.amount);
-
+        pool.triforceToken.safeTransfer(address(msg.sender), user.amount);
+        
         user.amount = 0;
         user.rewardDebt = 0;
 
         emit EmergencyWithdraw(msg.sender, _pid, user.amount);
     }
 
-    // Safe PYUKUMUKU token transfer function, just in case if
-    // rounding error causes pool to not have enough PYUKUMUKU tokens
+    // Safe TRIFORCE token transfer function, just in case if
+    // rounding error causes pool to not have enough TRIFORCE tokens
     function safeTokenTransfer(address _to, uint256 _amount) internal {
-        uint256 balance = pyukumuku.balanceOf(address(this));
+        uint256 balance = triforce.balanceOf(address(this));
         uint256 amount = _amount > balance ? balance : _amount;
-        pyukumuku.transfer(_to, amount);
+        triforce.transfer(_to, amount);
     }
 
     function setProtocolFeeRate(uint256 _protocolFeeRate) external onlyOwner {

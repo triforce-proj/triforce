@@ -1183,15 +1183,15 @@ contract ERC1155Tradable is ERC1155, ERC1155MintBurn, ERC1155Metadata, Ownable, 
 }
 
 /**
- * @title PowerCollective
- * PowerCollective - Collect limited edition NFTs from PowerCollective
+ * @title Pyukumuku pYUK
+ * Pyukumuku - Collect limited edition NFTs by Pyukumuku
  */
 contract PyukumukuNFT is ERC1155Tradable {
-	constructor(address _proxyRegistryAddress) public ERC1155Tradable("Pyukumuku", "PYU", _proxyRegistryAddress) {
-		_setBaseMetadataURI("https://api.tfcprotocol.com/pyu/");
+	constructor(address _proxyRegistryAddress) public ERC1155Tradable("Pyukumuku NFT", "pYUK", _proxyRegistryAddress) {
+		_setBaseMetadataURI("https://api.tfcprotocol.com/pYUK/");
 	}
 
 	function contractURI() public view returns (string memory) {
-		return "https://api.tfcprotocol.com/contract/pyu-erc1155";
+		return "https://api.tfcprotocol.com/contract/pYUK-erc1155";
 	}
 }

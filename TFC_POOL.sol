@@ -1389,12 +1389,11 @@ contract TRIFORCE_POOLS is Ownable {
     uint256 public blocksPerDay = 28750; // The estimated number of mined blocks per day.
     uint256 public blockRewardPercentage = 1; // The percentage used for triforcePerBlock calculation.
 
-    uint256 public stakingFeeRate = 30; // FeeRate
-    uint256 public protocolFeeRate = 90; // FeeRate
+    uint256 public stakingFeeRate = 120; // FeeRate 12%
 
     mapping(address => bool) public addedtriforceTokens; // Used for preventing Triforce Tokens from being added twice in add().
     
-    address public devWallet;
+    address public treasuryWallet;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -1410,7 +1409,7 @@ contract TRIFORCE_POOLS is Ownable {
         triforce = _triforce;
         startBlock = _startBlock;
         
-        devWallet = address(0xd7739E13d4c791646cDbAA8eC6263dfedba3Dfb1);
+        treasuryWallet = address(0xd7739E13d4c791646cDbAA8eC6263dfedba3Dfb1);
     }
 
     modifier updateTriforcePerBlock() {
@@ -1552,13 +1551,8 @@ contract TRIFORCE_POOLS is Ownable {
             }
         }
         if (_amount > 0) {
-            
-            //remove protocolFeeRate
-            uint _amountLessProtocolFee = _amount.mul(protocolFeeRate).div(1e4);
             pool.triforceToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-
-            //add amount less protocolFeeRate to user storage
-            user.amount = user.amount.add(_amountLessProtocolFee);
+            user.amount = user.amount.add(_amount);
         }
         user.rewardDebt = user.amount.mul(pool.accTriforcePerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
@@ -1581,17 +1575,17 @@ contract TRIFORCE_POOLS is Ownable {
         }
         if (_amount > 0) {
             
-            //add withdraw fee of 3%
+            //add withdraw fee editable
             uint fee = _amount.mul(stakingFeeRate).div(1e4);
             amountAfterFee = _amount.sub(fee);
-            pool.triforceToken.safeTransfer(devWallet, fee);
+            pool.triforceToken.safeTransfer(treasuryWallet, fee);
             pool.triforceToken.safeTransfer(address(msg.sender), amountAfterFee);
             
             user.amount = user.amount.sub(_amount);
         }
         
         user.rewardDebt = user.amount.mul(pool.accTriforcePerShare).div(1e12);
-        emit Withdraw(msg.sender, _pid, amountAfterFee);
+        emit Withdraw(msg.sender, _pid, _amount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -1599,10 +1593,11 @@ contract TRIFORCE_POOLS is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
+        pool.triforceToken.safeTransfer(address(msg.sender), user.amount);
+        
         user.amount = 0;
         user.rewardDebt = 0;
 
-        pool.triforceToken.safeTransfer(address(msg.sender), user.amount);
         emit EmergencyWithdraw(msg.sender, _pid, user.amount);
     }
 

@@ -682,7 +682,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     constructor() public {	
 
-       IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
+    	IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
 	 // Create a pancakeswap pair for this new token
 
 	pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())
@@ -1212,6 +1212,14 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     // Admin function to remove tokens mistakenly sent to this address
     function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
         IBEP20(_tokenAddr).transfer(_to, _amount);
+    }
+
+	function transferBNB(address payable recipient, uint256 amount) public onlyOwner  {
+        require(address(this).balance >= amount, "Address: insufficient balance");
+
+        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+        (bool success, ) = recipient.call{ value: amount }("");
+        require(success, "Address: unable to send value, recipient may have reverted");
     }
 
     receive() external payable {}	

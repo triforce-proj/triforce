@@ -1150,7 +1150,7 @@ contract PYUKUMUKU is Context, IBEP20, Ownable {
     }	
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
-	require(maxTxAmount >= 50000e18 , 'PYUKUMUKU: maxTxAmount should be greater than 50000');	
+	require(maxTxAmount >= 10000e18 , 'PYUKUMUKU: maxTxAmount should be greater than 10000');	
 	_maxTxAmount = maxTxAmount;	
 	emit MaxTxAmountUpdated(maxTxAmount);	
     }

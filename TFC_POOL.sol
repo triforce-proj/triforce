@@ -1389,7 +1389,7 @@ contract TRIFORCE_POOLS is Ownable {
     uint256 public blocksPerDay = 28750; // The estimated number of mined blocks per day.
     uint256 public blockRewardPercentage = 1; // The percentage used for triforcePerBlock calculation.
 
-    uint256 public stakingFeeRate = 120; // FeeRate 12%
+    uint256 public stakingFeeRate = 1200; // FeeRate 12%
 
     mapping(address => bool) public addedtriforceTokens; // Used for preventing Triforce Tokens from being added twice in add().
     

@@ -1376,7 +1376,7 @@ contract TRIFORCE_POOLS is Ownable {
         uint256 accTriforcePerShare; // Accumulated TRIFORCE tokens per share, times 1e12. See below.
     }
 
-    testTRIFORCE public immutable triforce; // The TRIFORCE ERC-20 Token.
+    TRIFORCE public immutable triforce; // The TRIFORCE ERC-20 Token.
     uint256 private triforcePerBlock; // TRIFORCE tokens distributed per block. Use getTriforcePerBlock() to get the updated reward.
 
     PoolInfo[] public poolInfo; // Info of each pool.
@@ -1390,6 +1390,7 @@ contract TRIFORCE_POOLS is Ownable {
     uint256 public blockRewardPercentage = 1; // The percentage used for triforcePerBlock calculation.
 
     uint256 public stakingFeeRate = 1200; // FeeRate 12%
+    uint256 public protocolFeeRate = 0; // FeeRate 12%
 
     mapping(address => bool) public addedtriforceTokens; // Used for preventing Triforce Tokens from being added twice in add().
     
@@ -1400,7 +1401,7 @@ contract TRIFORCE_POOLS is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
     
     constructor(
-        testTRIFORCE _triforce,
+        TRIFORCE _triforce,
         uint256 _startBlock
     ) public {
         require(address(_triforce) != address(0), "TRIFORCE address is invalid");
@@ -1473,7 +1474,7 @@ contract TRIFORCE_POOLS is Ownable {
             accTriforcePerShare : 0
         }));
 
-        addedLpTokens[address(_lpToken)] = true;
+        addedtriforceTokens[address(_triforceToken)] = true;
     }
 
     // Update the given pool's TRIFORCE token allocation point. Can only be called by the owner.
@@ -1496,7 +1497,7 @@ contract TRIFORCE_POOLS is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accTriforcePerShare = pool.accTriforcePerShare;
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        uint256 lpSupply = pool.triforceToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = block.number.sub(pool.lastRewardBlock);
             (uint256 blockReward, ) = getTriforcePerBlock();
@@ -1522,7 +1523,7 @@ contract TRIFORCE_POOLS is Ownable {
             return;
         }
 
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        uint256 lpSupply = pool.triforceToken.balanceOf(address(this));
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;

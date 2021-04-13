@@ -1420,23 +1420,18 @@ contract StrategyAutoCake is Ownable, Pausable {
     * @param _vault new vault address.
     */
     function setVault(address _vault) external {
-        require(msg.sender == owner() || msg.sender == keeper, "!authorized");
+        require(msg.sender == owner(), "!authorized");
         
         vault = _vault;
     }
 
     /**
-     * @dev Rescues random funds stuck that the strat can't handle.
-     * @param _token address oof the tkoen to rescue.
+     * @dev Rescues random funds stuck 
+     * @param _token address of the token to rescue.
      */
     function inCaseTokensGetStuck(address _token) external {
-        require(msg.sender == owner() || msg.sender == keeper, "!authorized");
-
-        require(_token != wbnb, "!wbnb");
-        require(_token != pYUK, "!pYUK");
-        require(_token != alpaca, "!alpaca");
-        require(_token != sAlpaca, "!sAlpaca");
-
+        require(msg.sender == owner(), "!authorized");
+        
         uint256 amount = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(msg.sender, amount);
     }

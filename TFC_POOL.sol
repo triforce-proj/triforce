@@ -769,7 +769,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 	inSwapAndLiquify = false;
     }
 
-    constructor() public {	
+    constructor() public nonReentrant {	
 
 	IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
 	//Create a pancakeswap pair for this new token

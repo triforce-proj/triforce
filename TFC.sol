@@ -691,7 +691,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
-	event MaxTxAmountUpdated(uint256 maxTxAmount);
+    event MaxTxAmountUpdated(uint256 maxTxAmount);
 
     modifier lockTheSwap {
 	inSwapAndLiquify = true;
@@ -1167,12 +1167,12 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
     function setEnableTrading(bool enabled) external onlyOwner() {	
     	tradingEnabled = enabled;	
-    	TradingEnabled(enabled);	
+    	emit TradingEnabled(enabled);	
     }	
 
     function setEnableSelling(bool enabled) external onlyOwner() {	
     	sellingEnabled = enabled;	
-    	SellingEnabled(enabled);	
+    	emit SellingEnabled(enabled);	
     }
 
     function setExcludedFromFee(address account, bool excluded) external onlyOwner {	
@@ -1181,7 +1181,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
     function setSwapAndLiquifyEnabled(bool enabled) external onlyOwner {	
 	swapAndLiquifyEnabled = enabled;	
-	SwapAndLiquifyEnabledUpdated(enabled);	
+	emit SwapAndLiquifyEnabledUpdated(enabled);	
     }	
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	

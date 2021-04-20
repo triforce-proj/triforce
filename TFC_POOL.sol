@@ -82,11 +82,9 @@ interface IPancakeFactory {
     function createPair(address tokenA, address tokenB) external returns (address pair);
 }
 
-
 interface IPancakePair {
     function sync() external;   
 }
-
 
 interface IPancakeRouter01 {
     function factory() external pure returns (address);
@@ -660,7 +658,7 @@ contract Ownable is Context {
     }
 }
 
-// "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/ReentrancyGuard.sol";
+//"https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/ReentrancyGuard.sol";
 abstract contract ReentrancyGuard {
     
     uint256 private constant _NOT_ENTERED = 1;
@@ -761,7 +759,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
-	event MaxTxAmountUpdated(uint256 maxTxAmount);
+    event MaxTxAmountUpdated(uint256 maxTxAmount);
 
     modifier lockTheSwap {
 	inSwapAndLiquify = true;
@@ -1237,12 +1235,12 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
     function setEnableTrading(bool enabled) external onlyOwner() {	
     	tradingEnabled = enabled;	
-    	TradingEnabled(enabled);	
+    	emit TradingEnabled(enabled);	
     }	
 
     function setEnableSelling(bool enabled) external onlyOwner() {	
     	sellingEnabled = enabled;	
-    	SellingEnabled(enabled);	
+    	emit SellingEnabled(enabled);	
     }
 
     function setExcludedFromFee(address account, bool excluded) external onlyOwner {	
@@ -1251,7 +1249,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
     function setSwapAndLiquifyEnabled(bool enabled) external onlyOwner {	
 	swapAndLiquifyEnabled = enabled;	
-	SwapAndLiquifyEnabledUpdated(enabled);	
+	emit SwapAndLiquifyEnabledUpdated(enabled);	
     }	
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
@@ -1360,16 +1358,19 @@ contract TRIFORCE_POOLS is Ownable, ReentrancyGuard {
     uint256 public startBlock; // The block number when TRIFORCE token mining starts.
 
     uint256 public blockRewardUpdateCycle = 1 days; // The cycle in which the triforcePerBlock gets updated.
+    
+    // The timestamp when the block triforcePerBlock was last updated.
     uint256 public blockRewardLastUpdateTime = block.timestamp; 
-	// The timestamp when the block triforcePerBlock was last updated.
+    
     uint256 public blocksPerDay = 28750; // The estimated number of mined blocks per day.
     uint256 public blockRewardPercentage = 1; // The percentage used for triforcePerBlock calculation.
 
     uint256 public stakingFeeRate = 1200; // FeeRate 12%
     uint256 public protocolFeeRate = 0; // FeeRate 12%
 
-    mapping(address => bool) public addedtriforceTokens; 
-	// Used for preventing Triforce Tokens from being added twice in add().
+    // Used for preventing Triforce Tokens from being added twice in add().
+    mapping(address => bool) public addedtriforceTokens;
+    
     
     address public treasuryWallet;
 
@@ -1417,11 +1418,14 @@ contract TRIFORCE_POOLS is Ownable, ReentrancyGuard {
     }
 
     function getTriforcePerBlockUpdateTime() public view returns (uint256) {
-        // if blockRewardUpdateCycle = 1 day then roundedUpdateTime = today's UTC midnight
+        
+	// if blockRewardUpdateCycle = 1 day then roundedUpdateTime = today's UTC midnight
         uint256 roundedUpdateTime = blockRewardLastUpdateTime - (blockRewardLastUpdateTime % blockRewardUpdateCycle);
-        // if blockRewardUpdateCycle = 1 day then calculateRewardTime = tomorrow's UTC midnight
+        
+	// if blockRewardUpdateCycle = 1 day then calculateRewardTime = tomorrow's UTC midnight
         uint256 calculateRewardTime = roundedUpdateTime + blockRewardUpdateCycle;
-        return calculateRewardTime;
+        
+	return calculateRewardTime;
     }
 
     function poolLength() external view returns (uint256) {
@@ -1434,7 +1438,8 @@ contract TRIFORCE_POOLS is Ownable, ReentrancyGuard {
         IERC20 _triforceToken,
         bool _withUpdate
     ) external onlyOwner {
-        require(address(_triforceToken) != address(0), "Triforce Token is invalid");
+        
+	require(address(_triforceToken) != address(0), "Triforce Token is invalid");
         require(!addedtriforceTokens[address(_triforceToken)], "Triforce Token is already added");
 
         require(_allocPoint >= 5 && _allocPoint <= 10, "_allocPoint is outside of range 5-10");
@@ -1442,9 +1447,11 @@ contract TRIFORCE_POOLS is Ownable, ReentrancyGuard {
         if (_withUpdate) {
             massUpdatePools();
         }
-        uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
+        
+	uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
-        poolInfo.push(PoolInfo({
+        
+	poolInfo.push(PoolInfo({
             triforceToken : _triforceToken,
             allocPoint : _allocPoint,
             lastRewardBlock : lastRewardBlock,
@@ -1471,17 +1478,21 @@ contract TRIFORCE_POOLS is Ownable, ReentrancyGuard {
 
     // View function to see pending TRIFORCE tokens on frontend.
     function pendingRewards(uint256 _pid, address _user) external view returns (uint256) {
-        PoolInfo storage pool = poolInfo[_pid];
+        
+	PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accTriforcePerShare = pool.accTriforcePerShare;
+        
+	uint256 accTriforcePerShare = pool.accTriforcePerShare;
         uint256 lpSupply = pool.triforceToken.balanceOf(address(this));
-        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
+        
+	if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = block.number.sub(pool.lastRewardBlock);
             (uint256 blockReward, ) = getTriforcePerBlock();
             uint256 triforceReward = multiplier.mul(blockReward).mul(pool.allocPoint).div(totalAllocPoint);
             accTriforcePerShare = accTriforcePerShare.add(triforceReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accTriforcePerShare).div(1e12).sub(user.rewardDebt);
+        
+	return user.amount.mul(accTriforcePerShare).div(1e12).sub(user.rewardDebt);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!

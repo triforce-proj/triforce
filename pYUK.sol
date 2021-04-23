@@ -653,7 +653,7 @@ contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {
     //the fee contains two decimal places so 300 = 3%
     uint256 public constant _feeDecimal = 2;
     uint256 public _taxFee = 100; //1% of a transaction's pYUK tokens will be collected as tax fee
-    uint256 public _burnFee = 800; // 8% of a transaction's pYUK tokens will be burned 
+    uint256 public _burnFee = 500; // 5% of a transaction's pYUK tokens will be burned 
     uint256 public _liquidityFee = 300; // 3% of a transaction's pYUK tokens will be collected as liquidity fee
     uint256 public _lpRewardFee = 0;
 
@@ -661,7 +661,7 @@ contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {
     uint256 public _rebalanceCallerFee = 500; // 5% of pYUK tokens are given to the caller of the rebalancer
     uint256 public _swapCallerFee = 100e18;   // 100 pYUK tokens will be given to the caller of transaction
 
-    uint256 public _maxTxAmount = 25000e18;  // maximum allowed 25000 pYUK tokens per transaction
+    uint256 public _maxTxAmount = 15000e18;  // maximum allowed 15000 pYUK tokens per transaction
 
     uint256 public _taxFeeTotal;	
     uint256 public _burnFeeTotal;

@@ -744,7 +744,7 @@ contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {
     bool public swapAndLiquifyEnabled = false;
     bool public rebalanceEnabled = true;
 
-    uint256 public minTokensBeforeSwap = 5000e18; // Contract's pYUK token balance >= 10000 pYUK Tokens
+    uint256 public minTokensBeforeSwap = 5000e18; // Contract's pYUK token balance >= 5000 pYUK Tokens
     uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance >= 10 pYUK tokens for rewarding LP
 
     uint256 public lastRebalance = now;

@@ -1,11 +1,11 @@
-// SPDX-License-Identifier: MIT
-
-pragma solidity 0.6.12;
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-		
+// SPDX-License-Identifier: MIT	
+	
+pragma solidity 0.6.12;	
+	
+/**	
+ * @dev Interface of the ERC20 standard as defined in the EIP.	
+*/
+	
 interface IERC20 {
     /**
      * @dev Returns the amount of tokens in existence.
@@ -630,20 +630,20 @@ contract Balancer {
     }
 }
 		
-contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {	
+contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {	
     using SafeMath for uint256;
     using Address for address;
 
-    string private  _name = "TRIFORCE";
-    string private  _symbol = "TFC";
-    uint8 private  _decimals = 18;
+    string private _name = "PYUKUMUKU";
+    string private _symbol = "pYUK";
+    uint8 private _decimals = 18;
 
     mapping(address => uint256) internal _reflectionBalance;
     mapping(address => uint256) internal _tokenBalance;
     mapping(address => mapping(address => uint256)) internal _allowances;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 internal _tokenTotal = 10_000_000e18; // 10 million total supply
+    uint256 internal _tokenTotal = 5_000_000e18; // 5 million total supply
     uint256 internal _reflectionTotal = (MAX - (MAX % _tokenTotal));
 
     mapping(address => bool) internal isExcludedFromFee;
@@ -652,16 +652,16 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
     //the fee contains two decimal places so 300 = 3%
     uint256 public constant _feeDecimal = 2;
-    uint256 public _taxFee = 300; //3% of a transaction's TFC tokens will be collected as tax fee
-    uint256 public _burnFee = 300; // 3% of a transaction's TFC tokens will be burned 
-    uint256 public _liquidityFee = 300; // 3% of a transaction's TFC tokens will be collected as liquidity fee
+    uint256 public _taxFee = 100; //1% of a transaction's pYUK tokens will be collected as tax fee
+    uint256 public _burnFee = 500; // 5% of a transaction's pYUK tokens will be burned 
+    uint256 public _liquidityFee = 300; // 3% of a transaction's pYUK tokens will be collected as liquidity fee
     uint256 public _lpRewardFee = 0;
 
     uint256 public _liquidityRemoveFee = 300;  //3% of liquidity will be used for rebalancing mechanism
-    uint256 public _rebalanceCallerFee = 500; // 5% of TFC tokens are given to the caller of the rebalancer
-    uint256 public _swapCallerFee = 200e18;   // 200 TFC tokens will be given to the caller of transaction
+    uint256 public _rebalanceCallerFee = 500; // 5% of pYUK tokens are given to the caller of the rebalancer
+    uint256 public _swapCallerFee = 100e18;   // 100 pYUK tokens will be given to the caller of transaction
 
-    uint256 public _maxTxAmount = 50000e18;  // maximum allowed 50000 TFC tokens per transaction
+    uint256 public _maxTxAmount = 15000e18;  // maximum allowed 15000 pYUK tokens per transaction
 
     uint256 public _taxFeeTotal;	
     uint256 public _burnFeeTotal;
@@ -670,12 +670,13 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
     bool public tradingEnabled = false;
     bool public sellingEnabled = false;
+    
     bool private inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = false;
     bool public rebalanceEnabled = true;
 
-    uint256 public minTokensBeforeSwap = 10000e18; // Contract's TFC token balance >= 10000 TFC Tokens 
-    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance >= 10 TFC tokens for rewarding LP
+    uint256 public minTokensBeforeSwap = 5000e18; // Contract's pYUK token balance >= 5000 pYUK Tokens
+    uint256 public minTokenBeforeReward = 10e18; // Reward wallet balance >= 10 pYUK tokens for rewarding LP
 
     uint256 public lastRebalance = now;
     uint256 public rebalanceInterval = 1 hours; // rebalancing after every 1 hour
@@ -683,11 +684,12 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
     IPancakeRouter02 public pancakeRouter;
     address public pancakeswapPair;
     address public rewardWallet;	
+    address public ownerWallet;
     address public balancer;
-    address public devWallet;
 
     event TradingEnabled(bool enabled);
     event SellingEnabled(bool enabled);
+    
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
@@ -699,10 +701,10 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 	inSwapAndLiquify = false;
     }
 
-    constructor() public nonReentrant {	
+    constructor() public nonReentrant{	
 
 	IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
-	//Create a pancakeswap pair for this new token
+	// Create a pancakeswap pair for this new token
 
 	pancakeswapPair = IPancakeFactory(_pancakeRouter.factory())
 	    .createPair(address(this), _pancakeRouter.WETH());
@@ -712,7 +714,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 	rewardWallet = address(new RewardWallet());
 	balancer = address(new Balancer());
 	
-	devWallet = msg.sender;
+	ownerWallet = msg.sender;
 
 	isExcludedFromFee[_msgSender()] = true;
 	isExcludedFromFee[address(this)] = true;
@@ -853,12 +855,12 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
 	require(	
 	    account != 0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F,	
-	    "TRIFORCE: We can not exclude Pancakeswap router."	
+	    "PYUKUMUKU: We can not exclude Pancakeswap router."	
 	);
 
-	require(account != address(this), 'TRIFORCE: We can not exclude contract self.');	
-	require(account != rewardWallet, 'TRIFORCE: We can not exclude reward wallet.');	
-	require(!_isExcluded[account], "TRIFORCE: Account is already excluded");	
+	require(account != address(this), 'PYUKUMUKU: We can not exclude contract self.');	
+	require(account != rewardWallet, 'PYUKUMUKU: We can not exclude reward wallet.');	
+	require(!_isExcluded[account], "PYUKUMUKU: Account is already excluded");	
 
 	if (_reflectionBalance[account] > 0) {	
 	   _tokenBalance[account] = tokenFromReflection(	
@@ -871,7 +873,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
 
     function includeAccount(address account) external onlyOwner() {	
 	
-    	require(_isExcluded[account], "TRIFORCE: Account is already included");
+    	require(_isExcluded[account], "PYUKUMUKU: Account is already included");
     	uint256 length = _excluded.length;
     	for (uint256 i = 0; i < length; i++) {	
     	    if (_excluded[i] == account) {	
@@ -891,7 +893,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
     ) private {	
     	require(owner != address(0), "BEP20: approve from the zero address");	
     	require(spender != address(0), "BEP20: approve to the zero address");	
-    	require(sellingEnabled || owner == devWallet, "Trading is locked.");	//d3vgen |===|}>
+    	require(sellingEnabled || owner == ownerWallet, "Trading is locked.");	//d3vgen |===|}>
     	_allowances[owner][spender] = amount;	
     	emit Approval(owner, spender, amount);	
     }
@@ -908,7 +910,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
     		isExcludedFromFee[sender] || isExcludedFromFee[recipient], "Trading is locked");	
     
     	if(sender != owner() && recipient != owner() && !inSwapAndLiquify) {	
-    		require(amount <= _maxTxAmount, "TRIFORCE: Transfer amount exceeds the maxTxAmount.");	
+    		require(amount <= _maxTxAmount, "PYUKUMUKU: Transfer amount exceeds the maxTxAmount.");	
     	}	
 
     	//swapAndLiquify or rebalance(don't do both at once or it will cost too much gas)	
@@ -1124,8 +1126,8 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
     }
 
     function rebalance() public {	
-    	require(now > lastRebalance + rebalanceInterval, 'TRIFORCE: Not yet time for Rebalance');
-    	require(balanceOf(_msgSender()) >= 1000e18, 'TRIFORCE: Not allowed Rebalance.');	
+    	require(now > lastRebalance + rebalanceInterval, 'PYUKUMUKU: Not yet time for Rebalance');
+    	require(balanceOf(_msgSender()) >= 500e18, 'PYUKUMUKU: Not allowed Rebalance.');	
     
     	uint256 lpBalance = IERC20(pancakeswapPair).balanceOf(address(this));	
     	require(lpBalance > 100, "LP balance of contract should be greater than 100");	
@@ -1185,7 +1187,7 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
     }	
 
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner() {	
-    	require(maxTxAmount >= 5000e18 , 'TRIFORCE: maxTxAmount should be greater than 5000');	
+    	require(maxTxAmount >= 500e18 , 'PYUKUMUKU: maxTxAmount should be greater than 500');	
     	_maxTxAmount = maxTxAmount;	
     	emit MaxTxAmountUpdated(maxTxAmount);	
     }
@@ -1247,5 +1249,5 @@ contract TRIFORCE is Context, IERC20, Ownable, ReentrancyGuard {
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
-    receive() external payable {}	
+    receive() external payable {}
 }

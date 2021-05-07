@@ -1047,14 +1047,25 @@ contract ERC1155Tradable is ERC1155, ERC1155MintBurn, ERC1155Metadata, Ownable, 
 	// Contract symbol
 	string public symbol;
 
+  //bsc proxy tbc
+	bool public proxyRegistryAddressEnabled;
+
 	constructor(
 		string memory _name,
-		string memory _symbol,
-		address _proxyRegistryAddress
+		string memory _symbol
 	) public {
 		name = _name;
 		symbol = _symbol;
+
+    proxyRegistryAddressEnabled = false;
+	}
+
+  function setProxyRegistryAddress(address _proxyRegistryAddress) public onlyOwner {
 		proxyRegistryAddress = _proxyRegistryAddress;
+	}
+
+  function setProxyRegistryAddressEnabled(bool _proxyRegistryAddressEnabled) public onlyOwner {
+		proxyRegistryAddressEnabled = _proxyRegistryAddressEnabled;
 	}
 
 	function removeWhitelistAdmin(address account) public onlyOwner {
@@ -1149,10 +1160,13 @@ contract ERC1155Tradable is ERC1155, ERC1155MintBurn, ERC1155Metadata, Ownable, 
 	 */
 	function isApprovedForAll(address _owner, address _operator) public view returns (bool isOperator) {
 		// Whitelist OpenSea proxy contract for easy trading.
-		ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
-		if (address(proxyRegistry.proxies(_owner)) == _operator) {
-			return true;
-		}
+
+    if(proxyRegistryAddressEnabled) {
+      ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
+      if (address(proxyRegistry.proxies(_owner)) == _operator) {
+        return true;
+      }
+    }
 
 		return ERC1155.isApprovedForAll(_owner, _operator);
 	}

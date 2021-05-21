@@ -906,16 +906,16 @@ contract PyukMasterVault2 is ERC20, Ownable {
     IERC20 public token;
     // The minimum time it has to pass before a strat candidate can be approved.
     uint256 public immutable approvalDelay;
-	bool private inDeposit;
+    bool private inDeposit;
 
     event NewStratCandidate(address implementation);
     event UpgradeStrat(address implementation);
 	
-	modifier lockForDeposit {
+     modifier lockForDeposit {
 	inDeposit = true;
 	_;
 	inDeposit = false;
-    }
+     }
     
     /**
      * @dev Sets the value of {token} to the token that the vault will

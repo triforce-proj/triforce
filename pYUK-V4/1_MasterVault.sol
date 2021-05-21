@@ -906,9 +906,16 @@ contract PyukMasterVault2 is ERC20, Ownable {
     IERC20 public token;
     // The minimum time it has to pass before a strat candidate can be approved.
     uint256 public immutable approvalDelay;
+	bool private inDeposit;
 
     event NewStratCandidate(address implementation);
     event UpgradeStrat(address implementation);
+	
+	modifier lockForDeposit {
+	inDeposit = true;
+	_;
+	inDeposit = false;
+    }
     
     /**
      * @dev Sets the value of {token} to the token that the vault will
@@ -974,21 +981,29 @@ contract PyukMasterVault2 is ERC20, Ownable {
      * @dev The entrypoint of funds into the system. People deposit with this function
      * into the vault. The vault is then in charge of sending funds into the strategy.
      */
-    function deposit(uint _amount) public {
+    function deposit(uint _amount) public lockForDeposit {
         uint256 _pool = balance();
         uint256 _before = token.balanceOf(address(this));
         token.safeTransferFrom(msg.sender, address(this), _amount);
         uint256 _after = token.balanceOf(address(this));
         _amount = _after.sub(_before); // Additional check for deflationary tokens
-        uint256 shares = 0;
-        if (totalSupply() == 0) {
-            shares = _amount;
-        } else {
-            shares = (_amount.mul(totalSupply())).div(_pool);
-        }
-        _mint(msg.sender, shares);
 
-        earn();
+        if(!inDeposit) {
+
+            uint256 shares = 0;
+
+            if (totalSupply() == 0) {
+                shares = _amount;
+            } else {
+                shares = (_amount.mul(totalSupply())).div(_pool);
+            }
+            
+            _mint(msg.sender, shares);
+
+            earn();
+
+        }
+
     }
 
     /**

@@ -1191,6 +1191,12 @@ contract StratManager is Ownable, Pausable {
     address public unirouter;
     address public vault;
     address public poolRewardsAddress;
+	
+    event keeperSet(address setAddress);
+    event strategistSet(address setAddress);
+    event unirouterSet(address setAddress);
+    event vaultSet(address setAddress);
+    event poolRewardsAddressSet(address setAddress);
 
     /**
      * @dev Initializes the base strategy.
@@ -1207,6 +1213,13 @@ contract StratManager is Ownable, Pausable {
         address _vault,
         address _poolRewardsAddress
     ) public {
+        
+        require(_keeper != address(0), "Address cannot be a zero address");
+        require(_strategist != address(0), "Address cannot be a zero address");
+        require(_unirouter != address(0), "Address cannot be a zero address");
+        require(_vault != address(0), "Address cannot be a zero address");
+        require(_poolRewardsAddress != address(0), "Address cannot be a zero address");
+        
         keeper = _keeper;
         strategist = _strategist;
         unirouter = _unirouter;
@@ -1231,7 +1244,9 @@ contract StratManager is Ownable, Pausable {
      * @param _keeper new keeper address.
      */
     function setKeeper(address _keeper) external onlyManager {
+        require(_keeper != address(0), "Address cannot be a zero address");
         keeper = _keeper;
+        emit keeperSet(_keeper);
     }
 
     /**
@@ -1239,8 +1254,10 @@ contract StratManager is Ownable, Pausable {
      * @param _strategist new strategist address.
      */
     function setStrategist(address _strategist) external {
+        require(_strategist != address(0), "Address cannot be a zero address");
         require(msg.sender == strategist, "!strategist");
         strategist = _strategist;
+        emit strategistSet(_strategist);
     }
 
     /**
@@ -1248,7 +1265,9 @@ contract StratManager is Ownable, Pausable {
      * @param _unirouter new unirouter address.
      */
     function setUnirouter(address _unirouter) external onlyOwner {
+        require(_unirouter != address(0), "Address cannot be a zero address");
         unirouter = _unirouter;
+        emit unirouterSet(_unirouter);
     }
 
     /**
@@ -1256,7 +1275,9 @@ contract StratManager is Ownable, Pausable {
      * @param _vault new vault address.
      */
     function setVault(address _vault) external onlyOwner {
+        require(_vault != address(0), "Address cannot be a zero address");
         vault = _vault;
+        emit vaultSet(_vault);
     }
 
     /**
@@ -1264,7 +1285,9 @@ contract StratManager is Ownable, Pausable {
      * @param _poolRewardsAddress new pYUK fee recipient address.
      */
     function setPoolRewardsAddress(address _poolRewardsAddress) external onlyOwner {
+        require(_poolRewardsAddress != address(0), "Address cannot be a zero address");
         poolRewardsAddress = _poolRewardsAddress;
+        emit poolRewardsAddressSet(_poolRewardsAddress);
     }
 
     /**
@@ -1291,12 +1314,14 @@ abstract contract FeeManager is StratManager {
     uint public callFee = 111;
     uint public rewardsFee = MAX_FEE - STRATEGIST_FEE - callFee;
     
-
+    event callFeeSet(uint256 fee);
+	
     function setCallFee(uint256 _fee) external onlyManager {
         require(_fee <= MAX_CALL_FEE, "!cap");
         
         callFee = _fee;
         rewardsFee = MAX_FEE - STRATEGIST_FEE - callFee;
+        emit callFeeSet(_fee);
     }
 }
 
@@ -1330,6 +1355,9 @@ contract StrategyCakeLP is StratManager, FeeManager, GasThrottler {
      * @dev Event that is fired each time someone harvests the strat.
      */
     event StratHarvest(address indexed harvester);
+    event depositCompleted(uint256 amount);
+    event withdrawCompleted(uint256 amount);
+    event stratRetired(address sender);
 
     constructor(
         address _want,
@@ -1366,6 +1394,7 @@ contract StrategyCakeLP is StratManager, FeeManager, GasThrottler {
 
         if (wantBal > 0) {
             IMasterChef(masterchef).deposit(poolId, wantBal);
+            emit depositCompleted(wantBal);
         }
     }
 
@@ -1377,13 +1406,14 @@ contract StrategyCakeLP is StratManager, FeeManager, GasThrottler {
         if (wantBal < _amount) {
             IMasterChef(masterchef).withdraw(poolId, _amount.sub(wantBal));
             wantBal = IERC20(want).balanceOf(address(this));
+            emit withdrawCompleted(wantBal);
         }
 
         if (wantBal > _amount) {
             wantBal = _amount;
         }
 
-        if (tx.origin == owner() || paused()) {
+        if (msg.sender == owner() || paused()) {
             IERC20(want).safeTransfer(vault, wantBal);
         } else {
             uint256 withdrawalFee = wantBal.mul(WITHDRAWAL_FEE).div(WITHDRAWAL_MAX);
@@ -1397,7 +1427,7 @@ contract StrategyCakeLP is StratManager, FeeManager, GasThrottler {
         chargeFees();
         addLiquidity();
         deposit();
-
+        
         emit StratHarvest(msg.sender);
     }
 
@@ -1459,6 +1489,7 @@ contract StrategyCakeLP is StratManager, FeeManager, GasThrottler {
 
         uint256 wantBal = IERC20(want).balanceOf(address(this));
         IERC20(want).transfer(vault, wantBal);
+        emit stratRetired(msg.sender);
     }
 
     // pauses deposits and withdraws all funds from third party systems.

@@ -30,6 +30,40 @@ library Math {
     }
 }
 
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.4.22 <0.9.0;
+
+
+/**
+ * @title Helps contracts guard agains reentrancy attacks.
+ * @author Remco Bloemen <remco@2π.com>
+ * @notice If you mark a function `nonReentrant`, you should also
+ * mark it `external`.
+ */
+contract ReentrancyGuard {
+
+  /**
+   * @dev We use a single lock for the whole contract.
+   */
+  bool private reentrancyLock = false;
+
+  /**
+   * @dev Prevents a contract from calling itself, directly or indirectly.
+   * @notice If you mark a function `nonReentrant`, you should also
+   * mark it `external`. Calling one nonReentrant function from
+   * another is not supported. Instead, you can implement a
+   * `private` function doing the actual work, and a `external`
+   * wrapper marked as `nonReentrant`.
+   */
+  modifier nonReentrant() {
+    require(!reentrancyLock);
+    reentrancyLock = true;
+    _;
+    reentrancyLock = false;
+  }
+
+}
+
 // File: @openzeppelin/contracts/token/ERC20/IERC20.sol
 
 pragma solidity ^0.5.0;
@@ -240,7 +274,8 @@ contract IRewardDistributionRecipient is Ownable {
         external
         onlyOwner
     {
-        rewardDistribution = _rewardDistribution;
+    	require(_rewardDistribution != address(0), "Cannot set a zero address");
+	rewardDistribution = _rewardDistribution;
     }
 }
 
@@ -592,9 +627,9 @@ contract TokenWrapper {
 
 pragma solidity ^0.5.0;
 
-contract RewardPool is TokenWrapper, IRewardDistributionRecipient {
+contract RewardPool is TokenWrapper, IRewardDistributionRecipient, ReentrancyGuard {
     IERC20 public wbnb = IERC20(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
-    uint256 public constant DURATION = 7 days;
+    uint256 public DURATION = 7 days;
 
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
@@ -608,6 +643,7 @@ contract RewardPool is TokenWrapper, IRewardDistributionRecipient {
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
+	event DurationSet(uint256 duration);
 
     modifier updateReward(address account) {
         rewardPerTokenStored = rewardPerToken();
@@ -660,7 +696,7 @@ contract RewardPool is TokenWrapper, IRewardDistributionRecipient {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function exit() external {
+    function exit() external nonReentrant {
         withdraw(balanceOf(msg.sender));
         getReward();
     }
@@ -691,9 +727,16 @@ contract RewardPool is TokenWrapper, IRewardDistributionRecipient {
         emit RewardAdded(reward);
     }
     
-    function setMaxStakeAmount(uint256 _maxStakeAmount) public onlyOwner {	
-	    maxStakeAmount = _maxStakeAmount;	
-    }	
+    function setMaxStakeAmount(uint256 _maxStakeAmount) public onlyOwner {
+    	maxStakeAmount = _maxStakeAmount;	
+    }
+    
+    function setDuration(uint256 _duration) public onlyOwner {
+
+	require (_duration != 0, "DURATION cannot be set as zero");
+	DURATION = _duration;
+	emit DurationSet(_duration);
+    }
     
     //Admin function to remove tokens mistakenly sent to this address
     function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) public onlyOwner {

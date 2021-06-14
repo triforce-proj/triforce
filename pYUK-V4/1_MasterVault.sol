@@ -911,6 +911,10 @@ contract PyukMasterVault2 is ERC20, Ownable {
     event NewStratCandidate(address implementation);
     event UpgradeStrat(address implementation);
 	
+    event earnCompleted(uint256 amount);
+    event withdrawCompleted(uint256 amount);
+    event TokensGetStuckSolved(uint256 amount);
+	
      modifier lockForDeposit {
 	inDeposit = true;
 	_;
@@ -938,6 +942,7 @@ contract PyukMasterVault2 is ERC20, Ownable {
         string(_name),
         string(_symbol)
     ) {
+	require(_strategy != address(0), "Address cannot be a zero address");
         token = IERC20(_token);
         strategy = _strategy;
         approvalDelay = _approvalDelay;
@@ -966,7 +971,7 @@ contract PyukMasterVault2 is ERC20, Ownable {
      * @dev Function for various UIs to display the current value of one of our yield tokens.
      * Returns an uint256 with 18 decimals of how much underlying asset one vault share represents.
      */
-    function getPricePerFullShare() public view returns (uint256) {
+    function getPricePerFullShare() external view returns (uint256) {
         return totalSupply() == 0 ? 1e18 : balance().mul(1e18).div(totalSupply());
     }
 
@@ -982,7 +987,9 @@ contract PyukMasterVault2 is ERC20, Ownable {
      * into the vault. The vault is then in charge of sending funds into the strategy.
      */
     function deposit(uint _amount) public lockForDeposit {
-        uint256 _pool = balance();
+        
+	require(_amount > 0, "Deposit amount should be more than zero");
+	uint256 _pool = balance();
         uint256 _before = token.balanceOf(address(this));
         token.safeTransferFrom(msg.sender, address(this), _amount);
         uint256 _after = token.balanceOf(address(this));
@@ -1014,6 +1021,7 @@ contract PyukMasterVault2 is ERC20, Ownable {
         uint _bal = available();
         token.safeTransfer(strategy, _bal);
         IStrategy(strategy).deposit();
+	emit earnCompleted(_bal);
     }
 
     /**
@@ -1029,6 +1037,7 @@ contract PyukMasterVault2 is ERC20, Ownable {
      * tokens are burned in the process.
      */
     function withdraw(uint256 _shares) public {
+	require(_shares > 0, "Withdrawal amount should be more than zero");
         uint256 r = (balance().mul(_shares)).div(totalSupply());
         _burn(msg.sender, _shares);
 
@@ -1044,6 +1053,7 @@ contract PyukMasterVault2 is ERC20, Ownable {
         }
 
         token.safeTransfer(msg.sender, r);
+	emit withdrawCompleted(r);
     }
 
     /** 
@@ -1088,5 +1098,6 @@ contract PyukMasterVault2 is ERC20, Ownable {
 
         uint256 amount = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(msg.sender, amount);
+	emit TokensGetStuckSolved(amount);
     }
 }

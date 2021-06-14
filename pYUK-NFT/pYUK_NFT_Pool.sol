@@ -685,7 +685,7 @@ contract ERC1155 is IERC165 {
   mapping (address => mapping(uint256 => uint256)) internal balances;
 
   // Operator Functions
-  mapping (address => mapping(address => bool)) internal operators;
+  mapping (address => mapping(address => bool)) internal operatorApprovals;
 
   // Events
   event TransferSingle(address indexed _operator, address indexed _from, address indexed _to, uint256 _id, uint256 _amount);
@@ -824,8 +824,10 @@ contract ERC1155 is IERC165 {
   function setApprovalForAll(address _operator, bool _approved)
     external
   {
+    require(_operator != address(0), "Address cannot be a zero address");
+	require(_operator != msg.sender, "Should not set approval for itself");
     // Update operator status
-    operators[msg.sender][_operator] = _approved;
+    operatorApprovals[msg.sender][_operator] = _approved;
     emit ApprovalForAll(msg.sender, _operator, _approved);
   }
 
@@ -838,7 +840,7 @@ contract ERC1155 is IERC165 {
   function isApprovedForAll(address _owner, address _operator)
     public view returns (bool isOperator)
   {
-    return operators[_owner][_operator];
+    return operatorApprovals[_owner][_operator];
   }
 
 
@@ -948,31 +950,6 @@ contract ERC1155Metadata {
   |    Metadata Internal Functions    |
   |__________________________________*/
 
-  /**
-   * @notice Will emit default URI log event for corresponding token _id
-   * @param _tokenIDs Array of IDs of tokens to log default URI
-   */
-  function _logURIs(uint256[] memory _tokenIDs) internal {
-    string memory baseURL = baseMetadataURI;
-    string memory tokenURI;
-
-    for (uint256 i = 0; i < _tokenIDs.length; i++) {
-      tokenURI = string(abi.encodePacked(baseURL, _uint2str(_tokenIDs[i]), ".json"));
-      emit URI(tokenURI, _tokenIDs[i]);
-    }
-  }
-
-  /**
-   * @notice Will emit a specific URI log event for corresponding token
-   * @param _tokenIDs IDs of the token corresponding to the _uris logged
-   * @param _URIs    The URIs of the specified _tokenIDs
-   */
-  function _logURIs(uint256[] memory _tokenIDs, string[] memory _URIs) internal {
-    require(_tokenIDs.length == _URIs.length, "ERC1155Metadata#_logURIs: INVALID_ARRAYS_LENGTH");
-    for (uint256 i = 0; i < _tokenIDs.length; i++) {
-      emit URI(_URIs[i], _tokenIDs[i]);
-    }
-  }
 
   /**
    * @notice Will update the base URL of token's URI
@@ -1042,7 +1019,9 @@ contract ERC1155MintBurn is ERC1155 {
   function _mint(address _to, uint256 _id, uint256 _amount, bytes memory _data)
     internal
   {
-    // Add _amount
+    
+	require(_to != address(0), "_to Address cannot be a zero address");
+	// Add _amount
     balances[_to][_id] = balances[_to][_id].add(_amount);
 
     // Emit event
@@ -1062,7 +1041,8 @@ contract ERC1155MintBurn is ERC1155 {
   function _batchMint(address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
     internal
   {
-    require(_ids.length == _amounts.length, "ERC1155MintBurn#batchMint: INVALID_ARRAYS_LENGTH");
+    require(_to != address(0), "_to Address cannot be a zero address");
+	require(_ids.length == _amounts.length, "ERC1155MintBurn#batchMint: INVALID_ARRAYS_LENGTH");
 
     // Number of mints to execute
     uint256 nMint = _ids.length;
@@ -1094,7 +1074,8 @@ contract ERC1155MintBurn is ERC1155 {
   function _burn(address _from, uint256 _id, uint256 _amount)
     internal
   {
-    //Substract _amount
+    require(_from != address(0), "_from Address cannot be a zero address");
+	//Substract _amount
     balances[_from][_id] = balances[_from][_id].sub(_amount);
 
     // Emit event
@@ -1110,7 +1091,8 @@ contract ERC1155MintBurn is ERC1155 {
   function _batchBurn(address _from, uint256[] memory _ids, uint256[] memory _amounts)
     internal
   {
-    require(_ids.length == _amounts.length, "ERC1155MintBurn#batchBurn: INVALID_ARRAYS_LENGTH");
+    require(_from != address(0), "_from Address cannot be a zero address");
+	require(_ids.length == _amounts.length, "ERC1155MintBurn#batchBurn: INVALID_ARRAYS_LENGTH");
 
     // Number of mints to execute
     uint256 nBurn = _ids.length;
@@ -1157,6 +1139,8 @@ contract ERC1155Tradable is ERC1155, ERC1155MintBurn, ERC1155Metadata, Ownable, 
 		string memory _symbol,
 		address _proxyRegistryAddress
 	) public {
+		
+		require(_proxyRegistryAddress != address(0), "proxyRegistryAddress cannot be a zero address");
 		name = _name;
 		symbol = _symbol;
 		proxyRegistryAddress = _proxyRegistryAddress;
@@ -1308,14 +1292,14 @@ contract PyukumukuTokenWrapper {
 
 	function stake(uint256 amount) public {
 		_totalSupply = _totalSupply.add(amount);
-		_balances[msg.sender] = _balances[msg.sender].add(amount);
-		pyukumuku.transferFrom(msg.sender, address(this), amount);
+		_balances[_msgSender()] = _balances[_msgSender()].add(amount);
+		pyukumuku.transferFrom(_msgSender(), address(this), amount);
 	}
 
 	function withdraw(uint256 amount) public {
 		_totalSupply = _totalSupply.sub(amount);
-		_balances[msg.sender] = _balances[msg.sender].sub(amount);
-		pyukumuku.transfer(msg.sender, amount);
+		_balances[_msgSender()] = _balances[_msgSender()].sub(amount);
+		pyukumuku.transfer(_msgSender(), amount);
 	}
 }
 
@@ -1342,6 +1326,7 @@ contract pYUKMinter_NFT_Pool is PyukumukuTokenWrapper, Ownable {
 	constructor(
     ERC1155Tradable _pYUKMinterAddress, 
     IERC20 _pyukumukuAddress) public PyukumukuTokenWrapper(_pyukumukuAddress) {
+		require(_pYUKMinterAddress != ERC1155Tradable(0), "Address cannot be a zero address");
 		pYUKMinter = _pYUKMinterAddress;
 	}
 
@@ -1359,36 +1344,38 @@ contract pYUKMinter_NFT_Pool is PyukumukuTokenWrapper, Ownable {
 	}
 
 	// stake visibility is public as overriding PyukumukuTokenWrapper's stake() function
-	function stake(uint256 amount) public updateReward(msg.sender) {
-		require(amount.add(balanceOf(msg.sender)) <= 1000000000000000000000000, "Cannot stake more than 1M Pyukumuku");
+	function stake(uint256 amount) public updateReward(_msgSender()) {
+		require(amount > 0, "Staking amount should be more than zero");
+		require(amount.add(balanceOf(_msgSender())) <= 1000000000000000000000000, "Cannot stake more than 1M Pyukumuku");
 
 		super.stake(amount);
-		emit Staked(msg.sender, amount);
+		emit Staked(_msgSender(), amount);
 	}
 
-	function withdraw(uint256 amount) public updateReward(msg.sender) {
+	function withdraw(uint256 amount) public updateReward(_msgSender()) {
 		require(amount > 0, "Cannot withdraw 0");
 
 		super.withdraw(amount);
-		emit Withdrawn(msg.sender, amount);
+		emit Withdrawn(_msgSender(), amount);
 	}
 
 	function exit() external {
-		withdraw(balanceOf(msg.sender));
+		withdraw(balanceOf(_msgSender()));
 	}
 
-	function redeem(uint256 card) public updateReward(msg.sender) {
+	function redeem(uint256 card) public updateReward(_msgSender()) {
 		require(cards[card] != 0, "Card not found");
-		require(points[msg.sender] >= cards[card], "Not enough points to redeem for card");
+		require(points[_msgSender()] >= cards[card], "Not enough points to redeem for card");
 		require(pYUKMinter.totalSupply(card) < pYUKMinter.maxSupply(card), "Max cards minted");
 
-		points[msg.sender] = points[msg.sender].sub(cards[card]);
-		pYUKMinter.mint(msg.sender, card, 1, "");
-		emit Redeemed(msg.sender, cards[card]);
+		points[_msgSender()] = points[_msgSender()].sub(cards[card]);
+		pYUKMinter.mint(_msgSender(), card, 1, "");
+		emit Redeemed(_msgSender(), cards[card]);
 	}
 
   //Admin function to remove tokens mistakenly sent to this address
   function transferAnyBEP20Tokens(address _tokenAddr, address _to, uint _amount) external onlyOwner {
-      require(IERC20(_tokenAddr).transfer(_to, _amount), "Transfer failed");
+      require(_to != address(0), "_to Address cannot be a zero address");
+	  require(IERC20(_tokenAddr).transfer(_to, _amount), "Transfer failed");
   }	
 }

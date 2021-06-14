@@ -763,6 +763,19 @@ contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {
     event SwapAndLiquify(uint256 tokensSwapped,uint256 ethReceived, uint256 tokensIntoLiqudity);
     event Rebalance(uint256 amount);
     event MaxTxAmountUpdated(uint256 maxTxAmount);
+	
+	event TaxFeeUpdated(uint256 amount);
+	event BurnFeeUpdated(uint256 amount);
+	event LiquidityFeeUpdated(uint256 amount);
+	event LPRewardFeeUpdated(uint256 amount);
+	event LiquidityRemoveFeeUpdated(uint256 amount);
+	event RebalanceCallerFeeUpdated(uint256 amount);
+	event SwapCallerFeeUpdated(uint256 amount);
+	event MinTokensBeforeSwapUpdated(uint256 amount);
+	event MinTokenBeforeRewardUpdated(uint256 amount);
+	event RebalanceIntervalUpdated(uint256 amount);
+	event RebalanceEnabled(bool enabled);
+	
 
     modifier lockTheSwap {
 	inSwapAndLiquify = true;
@@ -901,7 +914,7 @@ contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {
 	    return tokenAmount.mul(_getReflectionRate());	
 	} else {	
 	    return	
-		tokenAmount.sub(tokenAmount.mul(_taxFee).div(10** _feeDecimal + 2)).mul(	
+		tokenAmount.sub(tokenAmount.mul(_taxFee).div(10**(_feeDecimal + 2))).mul(	
 		   _getReflectionRate());	
 	}
     }
@@ -1261,48 +1274,69 @@ contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {
     	emit MaxTxAmountUpdated(maxTxAmount);	
     }
 
-    function setTaxFee(uint256 fee) external onlyOwner {	
-    	_taxFee = fee;	
+    function setTaxFee(uint256 fee) external onlyOwner {
+		require(fee <= 1000e18 , 'PYUKUMUKU: Tax Fee should not be greater than 10%');	
+    	_taxFee = fee;
+		emit TaxFeeUpdated(fee);
     }	
 
-    function setBurnFee(uint256 fee) external onlyOwner {	
-	_burnFee = fee;	
+    function setBurnFee(uint256 fee) external onlyOwner {
+		require(fee <= 1000e18 , 'PYUKUMUKU: Burn Fee should not be greater than 10%');
+		_burnFee = fee;
+		emit BurnFeeUpdated(fee);
     }	
 
-    function setLiquidityFee(uint256 fee) external onlyOwner {	
-	_liquidityFee = fee;	
+    function setLiquidityFee(uint256 fee) external onlyOwner {
+		require(fee <= 1000e18 , 'PYUKUMUKU: Liquidity Fee should not be greater than 10%');
+		_liquidityFee = fee;
+		emit LiquidityFeeUpdated(fee);
     }	
 
     function setLpRewardFee(uint256 fee) external onlyOwner {	
-	_lpRewardFee = fee;	
+		require(fee <= 1000e18 , 'PYUKUMUKU: LPReward Fee should not be greater than 10%');
+		_lpRewardFee = fee;
+		emit LPRewardFeeUpdated(fee);
     }	
 
     function setLiquidityRemoveFee(uint256 fee) external onlyOwner {	
-	_liquidityRemoveFee = fee;	
+		require(fee <= 1000e18 , 'PYUKUMUKU: LiquidityRemove Fee should not be greater than 10%');
+		_liquidityRemoveFee = fee;
+		emit LiquidityRemoveFeeUpdated(fee);
+		
     }
 
     function setRebalanceCallerFee(uint256 fee) external onlyOwner {	
-	_rebalanceCallerFee = fee;	
+		require(fee <= 5000e18 , 'PYUKUMUKU: LiquidityRemove Fee should not be greater than 50%');
+		_rebalanceCallerFee = fee;
+		emit RebalanceCallerFeeUpdated(fee);
     }	
 
     function setSwapCallerFee(uint256 fee) external onlyOwner {	
-	_swapCallerFee = fee;	
+		require(fee <= 1000e18 , 'PYUKUMUKU: LiquidityRemove Fee should not be greater than 10%');
+		_swapCallerFee = fee;
+		emit SwapCallerFeeUpdated(fee);
     }	
 
     function setMinTokensBeforeSwap(uint256 amount) external onlyOwner {	
-	minTokensBeforeSwap = amount;	
+		require(amount > 0, "MinTokensBeforeSwap should be more than zero");
+		minTokensBeforeSwap = amount;
+		emit MinTokensBeforeSwapUpdated(amount);
     }	
 
     function setMinTokenBeforeReward(uint256 amount) external onlyOwner {	
-	minTokenBeforeReward = amount;	
+		require(amount > 0, "MinTokensBeforeReward should be more than zero");
+		minTokenBeforeReward = amount;
+		emit MinTokenBeforeRewardUpdated(amount);
     }	
 
     function setRebalanceInterval(uint256 interval) external onlyOwner {	
-	rebalanceInterval = interval;	
+		rebalanceInterval = interval;
+		emit RebalanceIntervalUpdated(interval);
     }
     
     function setRebalanceEnabled(bool enabled) external onlyOwner {	
-    	rebalanceEnabled = enabled;	
+    	rebalanceEnabled = enabled;
+		emit RebalanceEnabled(enabled);
     }
 
     // Admin function to remove tokens mistakenly sent to this address
@@ -1311,6 +1345,8 @@ contract PYUKUMUKU is Context, IERC20, Ownable, ReentrancyGuard {
     }
 
     function transferBNB(address payable recipient, uint256 amount) external onlyOwner  {
+		
+		require(recipient != address(0), "Address cannot be a zero address");
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
@@ -1442,8 +1478,8 @@ contract PYUKUMUKU_POOLS is Ownable, ReentrancyGuard {
     ) external onlyOwner {
         require(address(_stakingToken) != address(0), "Staking Token is invalid");
         require(!addedLpTokens[address(_stakingToken)], "Staking Token is already added");
-
         require(_allocPoint >= 5 && _allocPoint <= 10, "_allocPoint is outside of range 5-10");
+        require(poolInfo.length <= 10, "Max of 10 pools");
 
         if (_withUpdate) {
             massUpdatePools();
@@ -1491,7 +1527,7 @@ contract PYUKUMUKU_POOLS is Ownable, ReentrancyGuard {
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
-    function massUpdatePools() public {
+    function massUpdatePools() internal {
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
             updatePool(pid);
@@ -1500,7 +1536,7 @@ contract PYUKUMUKU_POOLS is Ownable, ReentrancyGuard {
 
     // Update reward variables of the given pool to be up-to-date when lpSupply changes
     // For every deposit/withdraw pool recalculates accumulated token value
-    function updatePool(uint256 _pid) public updatePyukumukuPerBlock {
+    function updatePool(uint256 _pid) internal updatePyukumukuPerBlock {
         PoolInfo storage pool = poolInfo[_pid];
         if (block.number <= pool.lastRewardBlock) {
             return;
